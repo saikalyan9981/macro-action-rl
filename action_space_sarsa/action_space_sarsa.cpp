@@ -43,6 +43,8 @@ void printUsage() {
     std::cout << "  --eps                    Sets the exploration rate" << std::endl;
     std::cout << "  --numOpponents           Sets the number of opponents" << std::endl;
     std::cout << "  --load                   If set, load weights from specified weight file" << std::endl;
+    std::cout << "  --loadFile               If set, load weights from specified weight file" << std::endl;
+    
     std::cout << "  --weightId               Sets the given Id for weight File" << std::endl;
     std::cout << "  --help                   Displays this help and exit" << std::endl;
     std::cout << "  --freq_set               comma separated list of frequencies" << std::endl;
@@ -108,7 +110,7 @@ hfo::action_t toAction(int action, const std::vector<float>& state_vec) {
 }
 
 void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int numEpiTest, double learnR, double lambda,
-                  int suffix, bool oppPres, std::vector<int> frequencies, double eps, bool load, std::string weightid) {
+                  int suffix, bool oppPres, std::vector<int> frequencies, double eps, bool load, std::string weightid,std::string loadFile) {
     // Number of features
     int numF = oppPres ? (8 + 3 * numTMates + 2 * numOpponents) : (3 + 3 * numTMates);
     // Number of actions
@@ -132,9 +134,11 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
 
     CMAC *fa = new CMAC(numF, numA, range, min, res);
     char *loadWtFile;
-    std::string s = load ? ("weights_" + std::to_string(suffix) +
-                            "_" + weightid) : "";
+    std::string s = loadFile;
+    // load ? ("weights_" + std::to_string(suffix) +
+                            // "_" + weightid) : "";
     loadWtFile = &s[0u];
+    // std:: cout<<"loadFile"<<" "<<loadFile<<"\n"<<"loadWtFile"<<" "<<loadWtFile<<"\n";
     SarsaAgent *sa = new SarsaAgent(numF, numA, learnR, eps, lambda, fa, loadWtFile, "");
 
     hfo::HFOEnvironment hfo;
@@ -153,6 +157,9 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
 
 
     for (int episode = 0; episode < (numEpi + numEpiTest); episode++) {
+        // std:: cout<<"episode: "<<episode<<"\n";
+
+
         if ((episode + 1) % 5000 == 0) {
             // Weights file
             char *wtFile;
@@ -176,21 +183,28 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
                 step = frequencies[action_freq];
             }
             const std::vector<float>& state_vec = hfo.getState();
-
+            // std:: cout<<"Game Started\n"<<step<<" <-- step\n";
             if (count_steps != step && action >= 0 && (a != hfo :: MARK_PLAYER ||  unum > 0)) {
                 count_steps ++;
+                // std:: cout<<"Micro Action start\n";
+
                 if (a == hfo::MARK_PLAYER) {
                     hfo.act(a, unum);
-                    //std::cout << "MARKING" << unum <<"\n";
+                    // std::cout << "MARKING" << unum <<"\n";
                 } else {
                     hfo.act(a);
                 }
                 status = hfo.step();
+                // std:: cout<<"Micro Action done\n";
+
                 continue;
 
             } else {
                 count_steps = 0;
             }
+
+            // std:: cout<<"Macro Action done\n";
+
 
             if(action != -1 && action_freq != -1) {
                 reward = getReward(status);
@@ -203,14 +217,21 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             for (int i = 0; i < numF; i++) {
                 state[i] = state_vec[indices[i]];
             }
-
+            // std:: cout<<"state filled\n";
             // Get raw action
             int combined_action = sa->selectAction(state);
+            // std:: cout<<"combined action "<<combined_action<<" \n";
             action = combined_action % frequencies.size();
+            // std:: cout<<"action "<<action<<" \n";
+            // std:: cout<<"frequencies.size() "<<frequencies.size()<<" \n";
+            
             action_freq = combined_action / frequencies.size();
+            // std:: cout<<"action_freq "<<action_freq<<" \n";
 
+            // std:: cout<<"got raw action\n";
             // Get hfo::Action
             a = toAction(action, state_vec);
+            // std:: cout<<"got action\n";
             if (a == hfo::MARK_PLAYER) {
                 unum = state_vec[(state_vec.size() - 1 - (action - 5) * 3)];
                 hfo.act(a, unum);
@@ -231,6 +252,8 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
                 sa->update(state, action, reward, discFac);
             }
             sa->endEpisode();
+            // std:: cout<<"episode_End: "<<episode<<"\n";
+
         }
     }
 
@@ -252,6 +275,8 @@ int main(int argc, char **argv) {
     double lambda = 0;
     bool load = false;
     std::string weightid;
+    std::string loadFile="";
+
     std::string freq_set = "1,2,4,8,16,32,64";
     for (int i = 0; i < argc; i++) {
         std::string param = std::string(argv[i]);
@@ -289,6 +314,8 @@ int main(int argc, char **argv) {
             weightid = std::string(argv[++i]);
         } else if(param == "--freq_set") {
             freq_set = std::string(argv[++i]);
+        } else if(param == "--loadFile") {
+            loadFile = std::string(argv[++i]);
         } else {
             printUsage();
             return 0;
@@ -301,7 +328,7 @@ int main(int argc, char **argv) {
     for (int agent = 0; agent < numAgents; agent++) {
         agentThreads[agent] = std::thread(offenseAgent, basePort,
                                           numTeammates, numOpponents, numEpisodes, numEpisodesTest, learnR, lambda,
-                                          agent, opponentPresent, frequencies, eps, load, weightid);
+                                          agent, opponentPresent, frequencies, eps, load, weightid,loadFile);
         sleep(5);
     }
     for (int agent = 0; agent < numAgents; agent++) {
