@@ -1,3 +1,4 @@
-action_state_sarsa/weights*
+*/weights*
 HFO/
 logs/
+*/*.o
