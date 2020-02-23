@@ -1,3 +1,15 @@
+2v2
+
+1. Helios
+
+a. 1406 / 2000 , 0.297
+b. 1407 / 2000 , 0.2965
+c. 1406 / 2000 , 0.297
+d. 1426 / 2000 , 0.287
+e. 1433 / 2000 , 0.2835
+
+Avg: Defense team wins with probability 0.2922
+
 3v3
 
 1. Helios
@@ -8,4 +20,5 @@ c. 738 / 2000 , 0.631
 d. 796 / 2000 , 0.602
 e. 732 / 2000 , 0.634
 
-Avg: Defence team wins with probability 0.6213. 
+Avg: Defense team wins with probability 0.6213. 
+
