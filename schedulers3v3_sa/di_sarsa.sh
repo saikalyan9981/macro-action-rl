@@ -10,6 +10,6 @@ sleep 5
 ./di_sarsa --numAgents 1 --numOpponents 3 --numEpisodes 50000 --numEpisodesTest 2000 --basePort 7160 \
 --weightId di_sarsa_lambda_0.5_step_32_seed_1 --lambda 0.5 --step 32 > ../logs/di_sarsa_debug.log
 
-kill -SIGINT $PID
+kill $PID
 sleep 5
 cd ..
