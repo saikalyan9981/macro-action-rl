@@ -6,9 +6,13 @@
 #include "SarsaAgent.h"
 #include "CMAC.h"
 #include <unistd.h>
+#include <fstream>
 
 // Before running this program, first Start HFO server:
 // $./bin/HFO --offense-agents numAgents
+
+std::fstream trace;
+
 
 void printUsage() {
     std::cout << "Usage:123 ./high_level_sarsa_agent [Options]" << std::endl;
@@ -98,7 +102,9 @@ inline hfo::action_t toAction(int action, const std::vector<float>& state_vec) {
 }
 
 void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int numEpiTest, double learnR, double lambda,
-                  int suffix, bool oppPres, double eps, int step, bool load, std::string weightid) {
+                  int suffix, bool oppPres, double eps, int step, bool load, std::string weightid,std:: string loadFile) {
+    trace.open("trace.txt", std::fstream::out);
+
 
     // Number of features
     int numF = oppPres ? (8 + 3 * numTMates + 2 * numOpponents) : (3 + 3 * numTMates);
@@ -124,8 +130,9 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
 
     CMAC *fa = new CMAC(numF, numA, range, min, res);
     char *loadWtFile;
-    std::string s = load ? ("weights_" + std::to_string(suffix) +
-                            "_" + weightid) : "";
+    std::string s = loadFile;
+    // load ? ("weights_" + std::to_string(suffix) +
+                            // "_" + weightid) : "";
     loadWtFile = &s[0u];
     SarsaAgent *sa = new SarsaAgent(numF, numA, learnR, eps, lambda, fa, loadWtFile, "");
 
@@ -161,9 +168,13 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             if (count_steps != step && action >= 0 && (a != hfo :: MARK_PLAYER ||  unum > 0)) {
                 count_steps ++;
                 if (a == hfo::MARK_PLAYER) {
+                    time_t now = time(0);
+                    trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
                     hfo.act(a, unum);
                     //std::cout << "MARKING" << unum <<"\n";
                 } else {
+                    time_t now = time(0);
+                    trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
                     hfo.act(a);
                 }
                 status = hfo.step();
@@ -192,9 +203,14 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             a = toAction(action, state_vec);
             if (a == hfo::MARK_PLAYER) {
                 unum = state_vec[(state_vec.size() - 1 - (action - 5) * 3)];
+                time_t now = time(0);
+                trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
                 hfo.act(a, unum);
             } else {
+                time_t now = time(0);
+                trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
                 hfo.act(a);
+
             }
             count_steps++;
             std::string s = std::to_string(action);
@@ -234,6 +250,7 @@ int main(int argc, char **argv) {
     double lambda = 0;
     int step = 10;
     bool load = false;
+    std:: string loadFile = "";
     std::string weightid;
     for (int i = 0; i < argc; i++) {
         std::string param = std::string(argv[i]);
@@ -271,7 +288,11 @@ int main(int argc, char **argv) {
             load = true;
         } else if(param == "--weightId") {
             weightid = std::string(argv[++i]);
-        } else {
+        }
+         else if(param == "--loadFile") {
+            loadFile = std::string(argv[++i]);
+        }
+         else {
             printUsage();
             return 0;
         }
@@ -281,7 +302,7 @@ int main(int argc, char **argv) {
     for (int agent = 0; agent < numAgents; agent++) {
         agentThreads[agent] = std::thread(offenseAgent, basePort,
                                           numTeammates, numOpponents, numEpisodes, numEpisodesTest, learnR, lambda,
-                                          agent, opponentPresent, eps, step, load, weightid);
+                                          agent, opponentPresent, eps, step, load, weightid,loadFile);
         sleep(5);
     }
     for (int agent = 0; agent < numAgents; agent++) {

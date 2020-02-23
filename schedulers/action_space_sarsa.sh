@@ -1,7 +1,8 @@
 #!/bin/bash
+# for human visualization, add --no-sync ; else --headless
 
 stdbuf -oL ./HFO/bin/HFO --offense-npcs 2 --defense-npcs 1 --defense-agents 1 \
---port 7020 --no-logging --headless --deterministic --trials 52000 --seed 1 > logs/action_space_sarsa.log 2>&1 &
+--port 7020 --no-sync --deterministic --trials 52000 --seed 1 > logs/action_space_sarsa.log 2>&1 &
 
 PID=$!
 cd action_space_sarsa
