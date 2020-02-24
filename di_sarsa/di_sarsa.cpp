@@ -132,7 +132,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
     char *loadWtFile;
     std::string s = loadFile;
     // load ? ("weights_" + std::to_string(suffix) +
-                            // "_" + weightid) : "";
+    //                         "_" + weightid) : "";
     loadWtFile = &s[0u];
     SarsaAgent *sa = new SarsaAgent(numF, numA, learnR, eps, lambda, fa, loadWtFile, "");
 
@@ -165,6 +165,9 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
         while (status == hfo::IN_GAME) {
             num_steps_per_epi++;
             const std::vector<float>& state_vec = hfo.getState();
+
+            // print ball position. 
+
             if (count_steps != step && action >= 0 && (a != hfo :: MARK_PLAYER ||  unum > 0)) {
                 count_steps ++;
                 if (a == hfo::MARK_PLAYER) {
@@ -250,7 +253,8 @@ int main(int argc, char **argv) {
     double lambda = 0;
     int step = 10;
     bool load = false;
-    std:: string loadFile = "";
+    // Max. number of agents considered = 2. 
+    std:: string loadFile[2] = {"", ""};
     std::string weightid;
     for (int i = 0; i < argc; i++) {
         std::string param = std::string(argv[i]);
@@ -290,7 +294,10 @@ int main(int argc, char **argv) {
             weightid = std::string(argv[++i]);
         }
          else if(param == "--loadFile") {
-            loadFile = std::string(argv[++i]);
+            loadFile[0] = std::string(argv[++i]);
+        }
+         else if(param == "--loadFile1") {
+            loadFile[1] = std::string(argv[++i]);
         }
          else {
             printUsage();
@@ -300,9 +307,10 @@ int main(int argc, char **argv) {
     int numTeammates = numOpponents - 1;
     std::thread agentThreads[numAgents];
     for (int agent = 0; agent < numAgents; agent++) {
+    	std::cout << loadFile[0] << "loading agent\n"; 
         agentThreads[agent] = std::thread(offenseAgent, basePort,
                                           numTeammates, numOpponents, numEpisodes, numEpisodesTest, learnR, lambda,
-                                          agent, opponentPresent, eps, step, load, weightid,loadFile);
+                                          agent, opponentPresent, eps, step, load, weightid,loadFile[agent]);
         sleep(5);
     }
     for (int agent = 0; agent < numAgents; agent++) {
