@@ -1,6 +1,15 @@
+<<<<<<< HEAD
 Goals              : 0
 Defense Captured   : 0
 Balls Out of Bounds: 0
 Out of Time        : 0
 [start.py] Cleaning up server and other processes
 Signal 15 received; exiting
+=======
+Trials             : 2000
+Goals              : 1362
+Defense Captured   : 470
+Balls Out of Bounds: 164
+Out of Time        : 4
+[start.py] Cleaning up server and other processes
+>>>>>>> 861314c1038ed2f6b64cb0f35ceeebf6eed3c4fe

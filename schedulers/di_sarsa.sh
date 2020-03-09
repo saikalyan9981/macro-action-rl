@@ -15,10 +15,9 @@ do
     # --weightId di_sarsa_lambda_0.5_step_32_seed_1 --lambda 0.5 --step 32 --loadFile weights_0_di_sarsa_lambda_0.5_step_32_seed_1_episode_50000
     
 
-    kill $PID
-    sleep 5
-    # tail -6 ../logs/di_sarsa.log > result_weights_0_di_sarsa_lambda_0.5_step_32_seed_1_episode_$i.txt
-
-    cd ..
-
-done
+./di_sarsa --numAgents 1 --numOpponents 2 --numEpisodes 0 --numEpisodesTest 20 --basePort 7160 \
+--weightId di_sarsa_lambda_0.5_step_32_seed_1 --lambda 0.5 --step 32 
+kill  $PID
+echo $PID
+sleep 5
+cd ..
