@@ -183,11 +183,20 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
                 step = frequencies[action_freq];
             }
             const std::vector<float>& state_vec = hfo.getState();
+            // std:: cout<<state_vec[0]<<"<- X position "<<state_vec[1]<<"<- Y position "<<state_vec[3]<<"<- Ball X  "<<state_vec[4]<<"<- Ball Y\n";
+            double Ball_X = state_vec[3], Ball_Y= state_vec[4];
+            bool in_micro_region = abs(Ball_X-1)<0.5 && abs(Ball_Y)<0.5;
+            double regReward = 0.01;
             // std:: cout<<"Game Started\n"<<step<<" <-- step\n";
             if (count_steps != step && action >= 0 && (a != hfo :: MARK_PLAYER ||  unum > 0)) {
                 count_steps ++;
                 // std:: cout<<"Micro Action start\n";
-
+                if (in_micro_region){
+                    reward -= regReward;
+                }
+                else{
+                    reward += regReward;
+                }
                 if (a == hfo::MARK_PLAYER) {
                     hfo.act(a, unum);
                     // std::cout << "MARKING" << unum <<"\n";
@@ -207,10 +216,12 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
 
 
             if(action != -1 && action_freq != -1) {
-                reward = getReward(status);
-                if (episode < numEpi) {
-                    sa->update(state, action, reward, discFac);
-                }
+                // double temp = getReward(status);
+                // reward = temp+reward*temp;
+                // std::cout<<reward<<"<-- interim\n";
+                // if (episode < numEpi) {
+                //     sa->update(state, action, reward, discFac);
+                // }
             }
 
             // Fill up state array
@@ -247,11 +258,15 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
         }
         // End of episode
         if(action != -1) {
-            reward = getReward(status);
+            double temp = getReward(status);
+            reward = temp+reward*temp;
+            std::cout<<reward<<"<-- eoe "<<episode<<"\n";
+
             if (episode < numEpi) {
                 sa->update(state, action, reward, discFac);
             }
             sa->endEpisode();
+            reward=0;
             // std:: cout<<"episode_End: "<<episode<<"\n";
 
         }

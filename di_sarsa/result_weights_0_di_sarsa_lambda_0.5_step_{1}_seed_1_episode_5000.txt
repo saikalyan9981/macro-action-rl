@@ -1,0 +1,6 @@
+Goals              : 1663
+Defense Captured   : 279
+Balls Out of Bounds: 57
+Out of Time        : 1
+[start.py] Cleaning up server and other processes
+Signal 15 received; exiting

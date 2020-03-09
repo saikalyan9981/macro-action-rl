@@ -1,15 +1,22 @@
 #!/bin/bash
 
+Lambda=0.9
+LearnR=0.01
+Step=32
+Port=7160
+Seed=1
+TrainEpisodes=50000
+
 stdbuf -oL ./HFO/bin/HFO --offense-npcs 3 --defense-npcs 2 --defense-agents 1 \
---port 7160 --no-logging --headless --deterministic --trials 52000 --seed 1 > logs/di_sarsa.log 2>&1 &
+--port ${Port} --no-logging --headless --deterministic --trials 52000 --seed $Seed > logs/di_sarsa.log 2>&1 &
 
 PID=$!
 cd di_sarsa
 sleep 5
 
-./di_sarsa --numAgents 1 --numOpponents 3 --numEpisodes 50000 --numEpisodesTest 2000 --basePort 7160 \
---weightId di_sarsa_lambda_0.5_step_32_seed_1 --lambda 0.5 --step 32 > ../logs/di_sarsa_debug.log
+./di_sarsa --numAgents 1 --numOpponents 3 --numEpisodes ${} --numEpisodesTest 2000 --basePort ${Port} \
+--weightId di_sarsa_lambda_${Lambda}_step_${Step}_seed_${Seed} --lambda ${Lambda} --learnRate ${LearnR} --step ${Step} > ../logs/di_sarsa_debug.log
 
-kill $PID
+kill -SIGINT $PID
 sleep 5
 cd ..

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-stdbuf -oL ./HFO/bin/HFO --offense-npcs 2 --defense-npcs 2 --defense-agents 1 \
+stdbuf -oL ./HFO/bin/HFO --offense-npcs 3 --defense-npcs 2 --defense-agents 1 \
 --port 7300 --no-logging --headless --deterministic --trials 2000 --seed 1 > logs/random.log 2>&1 &
 
 PID=$!
