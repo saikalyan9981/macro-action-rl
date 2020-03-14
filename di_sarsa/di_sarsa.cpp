@@ -7,6 +7,7 @@
 #include "CMAC.h"
 #include <unistd.h>
 #include <fstream>
+#include <queue>
 
 // Before running this program, first Start HFO server:
 // $./bin/HFO --offense-agents numAgents
@@ -143,11 +144,14 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
     double state[numF];
     int action = -1;
     double reward;
+    double total_reward_episode;
     int no_of_offense = numTMates + 1;
     hfo.connectToServer(hfo::HIGH_LEVEL_FEATURE_SET, "../HFO/bin/teams/base/config/formations-dt", port, "localhost", "base_right", false, "");
-
     selectFeatures(indices, numTMates, numOpponents, oppPres);
-    for (int episode = 0; episode < (numEpi + numEpiTest); episode++) {
+    std::queue <double> reward_queue;
+    double reward_sum_2000 =0;
+    for (int episode = 0; episode < numEpi; episode++) {
+        total_reward_episode = 0;
         if ((episode + 1) % 5000 == 0) {
             // Weights file
             char *wtFile;
@@ -172,12 +176,12 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
                 count_steps ++;
                 if (a == hfo::MARK_PLAYER) {
                     time_t now = time(0);
-                    trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
+                    // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
                     hfo.act(a, unum);
                     //std::cout << "MARKING" << unum <<"\n";
                 } else {
                     time_t now = time(0);
-                    trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
+                    // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
                     hfo.act(a);
                 }
                 status = hfo.step();
@@ -189,6 +193,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
 
             if(action != -1) {
                 reward = getReward(status);
+                total_reward_episode+=reward;
                 if (episode < numEpi) {
                     sa->update(state, action, reward, discFac);
                 }
@@ -207,11 +212,11 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             if (a == hfo::MARK_PLAYER) {
                 unum = state_vec[(state_vec.size() - 1 - (action - 5) * 3)];
                 time_t now = time(0);
-                trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
+                // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
                 hfo.act(a, unum);
             } else {
                 time_t now = time(0);
-                trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
+                // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
                 hfo.act(a);
 
             }
@@ -222,17 +227,27 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             }
             s += "UNUM" + std::to_string(unum) + "\n";;
             status = hfo.step();
-            // std::cout <<s;
+
         }
-        //std :: cout <<":::::::::::::" << num_steps_per_epi<< " "<<step << " "<<"\n";
+        std :: cout <<":::::::::::::" << num_steps_per_epi<< " "<<step << " "<<"\n";
         // End of episode
         if(action != -1) {
             reward = getReward(status);
+            total_reward_episode+=reward;
             if (episode < numEpi) {
                 sa->update(state, action, reward, discFac);
             }
             sa->endEpisode();
         }
+
+        reward_queue.push(total_reward_episode);
+        reward_sum_2000 += total_reward_episode;
+        if(reward_queue.size()>2000){
+            double reward_first =  reward_queue.front();
+            reward_sum_2000 -= reward_first;
+            reward_queue.pop();
+        }
+        trace<<"episode: "<<episode<<" , "<<"total_reward_episode: "<<total_reward_episode<<" , "<<"reward: "<<reward_sum_2000/reward_queue.size()<<std::endl;
     }
 
     delete sa;
