@@ -6,3 +6,4 @@ log/
 */*.o
 *.o
 *.log
+*/tarce.txt

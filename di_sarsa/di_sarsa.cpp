@@ -172,12 +172,16 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
                 count_steps ++;
                 if (a == hfo::MARK_PLAYER) {
                     time_t now = time(0);
-                    trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
+                    
+                    // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
+                    
                     hfo.act(a, unum);
                     //std::cout << "MARKING" << unum <<"\n";
                 } else {
                     time_t now = time(0);
-                    trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
+                    
+                    // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
+                    
                     hfo.act(a);
                 }
                 status = hfo.step();
@@ -207,11 +211,15 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             if (a == hfo::MARK_PLAYER) {
                 unum = state_vec[(state_vec.size() - 1 - (action - 5) * 3)];
                 time_t now = time(0);
-                trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
+                
+                // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
+                
                 hfo.act(a, unum);
             } else {
                 time_t now = time(0);
-                trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
+                
+                // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
+                
                 hfo.act(a);
 
             }
