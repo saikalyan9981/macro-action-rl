@@ -247,6 +247,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             reward_sum_2000 -= reward_first;
             reward_queue.pop();
         }
+        
         trace<<"episode: "<<episode<<" , "<<"total_reward_episode: "<<total_reward_episode<<" , "<<"reward: "<<reward_sum_2000/reward_queue.size()<<std::endl;
     }
 

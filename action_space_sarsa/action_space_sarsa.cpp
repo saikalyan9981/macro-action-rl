@@ -53,9 +53,9 @@ void printUsage() {
 // Returns the reward for SARSA based on current state
 double getReward(hfo::status_t status) {
     double reward;
-    if (status == hfo::GOAL) reward = -1;
-    else if (status == hfo::CAPTURED_BY_DEFENSE) reward = 1;
-    else if (status == hfo::OUT_OF_BOUNDS) reward = 1;
+    if (status == hfo::GOAL) reward = -10;
+    else if (status == hfo::CAPTURED_BY_DEFENSE) reward = 10;
+    else if (status == hfo::OUT_OF_BOUNDS) reward = 10;
     else reward = 0;
     return reward;
 }
@@ -296,7 +296,7 @@ int main(int argc, char **argv) {
     std::string weightid;
     std::string loadFile="";
 
-    std::string freq_set = "1,2,4,8,16,32,64";
+    std::string freq_set = "8,32";
     for (int i = 0; i < argc; i++) {
         std::string param = std::string(argv[i]);
         std::cout << param << "\n";
