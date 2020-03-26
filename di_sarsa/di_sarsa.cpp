@@ -113,7 +113,8 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
     int numA = 5 + numOpponents; //DEF_GOAL+MOVE+GTB+NOOP+RATG+MP(unum)
 
     // Other SARSA parameters
-    eps = 0.01;
+    // Changed Remember testing keep it 0
+    eps = 0.99;
     double discFac = 1;
     //double lambda=0.9375; THIS IS THE ACTUAL VALUE
     // double lambda = 0;
@@ -151,6 +152,14 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
     std::queue <double> reward_queue;
     double reward_sum_2000 =0;
     for (int episode = 0; episode < numEpi; episode++) {
+        if ((episode + 1) % 100 == 0) {
+            eps*=0.99;
+            learnR*=0.99;
+            sa->update_eps(eps);
+            // sa->update_learningRate(learnR);
+
+        }
+        sa->update_learningRate(1./(episode+1));
         total_reward_episode = 0;
         if ((episode + 1) % 5000 == 0) {
             // Weights file
@@ -229,7 +238,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             status = hfo.step();
 
         }
-        std :: cout <<":::::::::::::" << num_steps_per_epi<< " "<<step << " "<<"\n";
+        // std :: cout <<":::::::::::::" << num_steps_per_epi<< " "<<step << " "<<"\n";
         // End of episode
         if(action != -1) {
             reward = getReward(status);
