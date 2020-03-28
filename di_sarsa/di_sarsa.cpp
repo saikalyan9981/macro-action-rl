@@ -154,12 +154,12 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
     for (int episode = 0; episode < numEpi; episode++) {
         if ((episode + 1) % 100 == 0) {
             eps*=0.99;
-            learnR*=0.99;
+            // learnR*=0.99;
             sa->update_eps(eps);
             // sa->update_learningRate(learnR);
 
         }
-        sa->update_learningRate(1./(episode+1));
+        // sa->update_learningRate(1./(episode+1));
         total_reward_episode = 0;
         if ((episode + 1) % 5000 == 0) {
             // Weights file

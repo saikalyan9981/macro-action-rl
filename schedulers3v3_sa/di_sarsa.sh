@@ -1,7 +1,7 @@
 #!/bin/bash
 
 Lambda=0.9
-LearnR=1
+LearnR=0.00001
 Step=32
 Port=7160
 Seed=1

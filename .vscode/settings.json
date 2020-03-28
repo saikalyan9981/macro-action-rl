@@ -39,6 +39,23 @@
         "utility": "cpp",
         "bitset": "cpp",
         "functional": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "csignal": "cpp",
+        "cstdarg": "cpp",
+        "cstddef": "cpp",
+        "*.ipp": "cpp",
+        "atomic": "cpp",
+        "strstream": "cpp",
+        "complex": "cpp",
+        "condition_variable": "cpp",
+        "deque": "cpp",
+        "list": "cpp",
+        "algorithm": "cpp",
+        "iomanip": "cpp",
+        "mutex": "cpp",
+        "numeric": "cpp",
+        "cfenv": "cpp",
+        "cinttypes": "cpp",
+        "typeindex": "cpp"
     }
 }

@@ -264,7 +264,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
         if(action != -1) {
             double temp = getReward(status);
             reward = temp+reward*temp;
-            std::cout<<reward<<"<-- eoe "<<episode<<"\n";
+            // std::cout<<reward<<"<-- eoe "<<episode<<"\n";
 
             if (episode < numEpi) {
                 sa->update(state, action, reward, discFac);
