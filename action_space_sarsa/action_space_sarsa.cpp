@@ -6,9 +6,12 @@
 #include "SarsaAgent.h"
 #include "CMAC.h"
 #include <unistd.h>
+#include <fstream>
+#include <queue>
 
 // Before running this program, first Start HFO server:
 // $./bin/HFO --offense-agents numAgents
+std::fstream trace;
 
 std::vector<int> process_csv(std::string freq_set) {
     std::vector<int> vect;
@@ -53,7 +56,7 @@ void printUsage() {
 // Returns the reward for SARSA based on current state
 double getReward(hfo::status_t status) {
     double reward;
-    if (status == hfo::GOAL) reward = -10;
+    if (status == hfo::GOAL) reward = -1;
     else if (status == hfo::CAPTURED_BY_DEFENSE) reward = 10;
     else if (status == hfo::OUT_OF_BOUNDS) reward = 10;
     else reward = 0;
@@ -112,12 +115,14 @@ hfo::action_t toAction(int action, const std::vector<float>& state_vec) {
 void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int numEpiTest, double learnR, double lambda,
                   int suffix, bool oppPres, std::vector<int> frequencies, double eps, bool load, std::string weightid,std::string loadFile) {
     // Number of features
+    trace.open("trace.txt", std::fstream::out);
+
     int numF = oppPres ? (8 + 3 * numTMates + 2 * numOpponents) : (3 + 3 * numTMates);
     // Number of actions
     int numA = (5 + numOpponents) * frequencies.size(); //DEF_GOAL+MOVE+GTB+NOOP+RATG+MP(unum)
 
     // Other SARSA parameters
-    eps = 0.01;
+    // eps = 0.01;
     double discFac = 1;
     //double lambda=0.9375; THIS IS THE ACTUAL VALUE
     // Tile coding parameter
@@ -151,14 +156,21 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
     int action = -1;
     int action_freq = -1;
     int step = 1;
-    double reward;
+    double reward=0;
     int no_of_offense = numTMates + 1;
     hfo.connectToServer(hfo::HIGH_LEVEL_FEATURE_SET, "../HFO/bin/teams/base/config/formations-dt", port, "localhost", "base_right", false, "");
+    std::queue <double> reward_queue;
+    double reward_sum_2000 =0;
 
 
     for (int episode = 0; episode < (numEpi + numEpiTest); episode++) {
-        // std:: cout<<"episode: "<<episode<<"\n";
-
+        reward=0;
+        if ((episode + 1) % 100 == 0) {
+            eps*=0.99;
+            // learnR*=0.99;
+            sa->update_eps(eps);
+            // sa->update_learningRate(learnR);
+        }
 
         if ((episode + 1) % 5000 == 0) {
             // Weights file
@@ -189,7 +201,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             bool in_micro_region = abs(Ball_X-1)<0.5 && abs(Ball_Y)<0.5;
             bool small_step = step < 10 ; 
             double regReward = 0.01;
-            
+
             // std:: cout<<"Game Started\n"<<step<<" <-- step\n";
             if (count_steps != step && action >= 0 && (a != hfo :: MARK_PLAYER ||  unum > 0)) {
                 count_steps ++;
@@ -220,12 +232,12 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
 
 
             if(action != -1 && action_freq != -1) {
-                // double temp = getReward(status);
-                // reward = temp+reward*temp;
-                // std::cout<<reward<<"<-- interim\n";
-                // if (episode < numEpi) {
-                //     sa->update(state, action, reward, discFac);
-                // }
+                double temp = getReward(status);
+                reward += temp;
+                std::cout<<reward<<"<-- interim\n";
+                if (episode < numEpi) {
+                    sa->update(state, action, reward, discFac);
+                }
             }
 
             // Fill up state array
@@ -263,17 +275,27 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
         // End of episode
         if(action != -1) {
             double temp = getReward(status);
-            reward = temp+reward*temp;
-            // std::cout<<reward<<"<-- eoe "<<episode<<"\n";
+            reward += temp;
+            std::cout<<reward<<"<-- eoe "<<episode<<"\n";
 
             if (episode < numEpi) {
                 sa->update(state, action, reward, discFac);
             }
             sa->endEpisode();
-            reward=0;
             // std:: cout<<"episode_End: "<<episode<<"\n";
 
         }
+        reward_queue.push(reward);
+        reward_sum_2000 += reward;
+        if(reward_queue.size()>2000){
+            double reward_first =  reward_queue.front();
+            reward_sum_2000 -= reward_first;
+            reward_queue.pop();
+        }
+        trace<<"episode: "<<episode<<" , "<<"total_reward_episode: "<<reward<<" , "<<"reward: "<<reward_sum_2000/reward_queue.size()<<std::endl;
+
+
+
     }
 
     delete sa;
@@ -290,7 +312,7 @@ int main(int argc, char **argv) {
     int suffix = 0;
     bool opponentPresent = true;
     int numOpponents = 0;
-    double eps = 0.01;
+    double eps = 0.99;
     double lambda = 0;
     bool load = false;
     std::string weightid;
@@ -322,11 +344,11 @@ int main(int argc, char **argv) {
         } else if(param == "--noOpponent") {
             opponentPresent = false;
         } else if(param == "--eps") {
-            eps = atoi(argv[++i]);
+            eps = atof(argv[++i]);
         } else if(param == "--numOpponents") {
             numOpponents = atoi(argv[++i]);
         } else if(param == "--lambda") {
-            lambda = atoi(argv[++i]);
+            lambda = atof(argv[++i]);
         } else if(param == "--load") {
             load = true;
         } else if(param == "--weightId") {

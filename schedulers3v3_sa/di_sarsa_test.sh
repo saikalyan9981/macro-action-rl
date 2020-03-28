@@ -6,6 +6,7 @@ Port=7168
 Seed=1
 TrainEpisodes=0
 TestEpisodes=2000
+Eps=0
 for i in {5000..50000..5000}
 
 # for i in 50000
@@ -20,9 +21,10 @@ do
     PID=$!
     cd di_sarsa
     sleep 5
+    echo $PID
 
     ./di_sarsa --numAgents 1 --numOpponents 3 --numEpisodes $TrainEpisodes --numEpisodesTest $TestEpisodes --basePort $Port \
-    --weightId di_sarsa_lambda_${Lambda}_step_${Step}_seed_${Seed} --lambda ${Lambda} --step ${Step} --loadFile 3v3_sa_seed_${Seed}/weights_0_di_sarsa_lambda_${Lambda}_step_${Step}_seed_${Seed}_episode_$i \
+    --weightId di_sarsa_lambda_${Lambda}_step_${Step}_seed_${Seed} --lambda ${Lambda} --eps ${Eps} --step ${Step} --loadFile 3v3_sa_seed_${Seed}/weights_0_di_sarsa_lambda_${Lambda}_step_${Step}_seed_${Seed}_episode_$i \
     > ../logs/di_sarsa_debug.log
 
 

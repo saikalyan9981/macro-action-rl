@@ -105,7 +105,7 @@ inline hfo::action_t toAction(int action, const std::vector<float>& state_vec) {
 void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int numEpiTest, double learnR, double lambda,
                   int suffix, bool oppPres, double eps, int step, bool load, std::string weightid,std:: string loadFile) {
     trace.open("trace.txt", std::fstream::out);
-
+    std::cout<<"lambda: "<<lambda<<"\n";
 
     // Number of features
     int numF = oppPres ? (8 + 3 * numTMates + 2 * numOpponents) : (3 + 3 * numTMates);
@@ -114,7 +114,6 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
 
     // Other SARSA parameters
     // Changed Remember testing keep it 0
-    eps = 0.99;
     double discFac = 1;
     //double lambda=0.9375; THIS IS THE ACTUAL VALUE
     // double lambda = 0;
@@ -151,7 +150,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
     selectFeatures(indices, numTMates, numOpponents, oppPres);
     std::queue <double> reward_queue;
     double reward_sum_2000 =0;
-    for (int episode = 0; episode < numEpi; episode++) {
+    for (int episode = 0; episode < numEpi+numEpiTest; episode++) {
         if ((episode + 1) % 100 == 0) {
             eps*=0.99;
             // learnR*=0.99;
@@ -274,7 +273,7 @@ int main(int argc, char **argv) {
     int suffix = 0;
     bool opponentPresent = true;
     int numOpponents = 0;
-    double eps = 0.01;
+    double eps = 0.99;
     double lambda = 0;
     int step = 10;
     bool load = false;
@@ -306,9 +305,9 @@ int main(int argc, char **argv) {
         } else if(param == "--noOpponent") {
             opponentPresent = false;
         } else if(param == "--eps") {
-            eps = atoi(argv[++i]);
+            eps = atof(argv[++i]);
         } else if(param == "--lambda") {
-            lambda = atoi(argv[++i]);
+            lambda = atof(argv[++i]);
         } else if(param == "--numOpponents") {
             numOpponents = atoi(argv[++i]);
         } else if(param == "--step") {
