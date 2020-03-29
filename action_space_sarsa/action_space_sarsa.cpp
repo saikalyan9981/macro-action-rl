@@ -237,7 +237,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
                 std::cout<<reward<<"<-- interim\n";
                 if (episode < numEpi) {
                     // sa->update(state, action, reward, discFac);
-                    sa->update(state, action, temp, discFac);
+                    sa->update(state, action, reward, discFac);
                 }
             }
 
@@ -280,7 +280,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             std::cout<<reward<<"<-- eoe "<<episode<<"\n";
 
             if (episode < numEpi) {
-                sa->update(state, action, temp, discFac);
+                sa->update(state, action, reward, discFac);
             }
             sa->endEpisode();
             // std:: cout<<"episode_End: "<<episode<<"\n";
