@@ -56,9 +56,9 @@ void printUsage() {
 // Returns the reward for SARSA based on current state
 double getReward(hfo::status_t status) {
     double reward;
-    if (status == hfo::GOAL) reward = -1;
-    else if (status == hfo::CAPTURED_BY_DEFENSE) reward = 10;
-    else if (status == hfo::OUT_OF_BOUNDS) reward = 10;
+    if (status == hfo::GOAL) reward = -100;
+    else if (status == hfo::CAPTURED_BY_DEFENSE) reward = 100;
+    else if (status == hfo::OUT_OF_BOUNDS) reward = 100;
     else reward = 0;
     return reward;
 }
@@ -316,7 +316,10 @@ int main(int argc, char **argv) {
     double lambda = 0;
     bool load = false;
     std::string weightid;
-    std::string loadFile="";
+
+    // making two load files
+    // std::string loadFile="";
+    std:: string loadFile[2] = {"", ""};
 
     std::string freq_set = "4,32";
     for (int i = 0; i < argc; i++) {
@@ -355,9 +358,17 @@ int main(int argc, char **argv) {
             weightid = std::string(argv[++i]);
         } else if(param == "--freq_set") {
             freq_set = std::string(argv[++i]);
-        } else if(param == "--loadFile") {
-            loadFile = std::string(argv[++i]);
-        } else {
+        } 
+        // else if(param == "--loadFile") {
+        //     loadFile = std::string(argv[++i]);
+        // }
+        else if(param == "--loadFile") {
+            loadFile[0] = std::string(argv[++i]);
+        }
+         else if(param == "--loadFile1") {
+            loadFile[1] = std::string(argv[++i]);
+        }
+         else {
             printUsage();
             return 0;
         }
@@ -369,7 +380,7 @@ int main(int argc, char **argv) {
     for (int agent = 0; agent < numAgents; agent++) {
         agentThreads[agent] = std::thread(offenseAgent, basePort,
                                           numTeammates, numOpponents, numEpisodes, numEpisodesTest, learnR, lambda,
-                                          agent, opponentPresent, frequencies, eps, load, weightid,loadFile);
+                                          agent, opponentPresent, frequencies, eps, load, weightid,loadFile[agent]);
         sleep(5);
     }
     for (int agent = 0; agent < numAgents; agent++) {
