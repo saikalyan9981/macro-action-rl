@@ -1,10 +1,10 @@
 #!/bin/bash
 
 Lambda=0.9
-LearnR=0.0001
+LearnR=0.001
 Step=32
 Port=7260
-Seed=1
+Seed=2
 TrainEpisodes=50000
 TestEpisodes=2000
 Eps=0.99

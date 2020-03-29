@@ -200,7 +200,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             double Ball_X = state_vec[3], Ball_Y= state_vec[4];
             bool in_micro_region = abs(Ball_X-1)<0.5 && abs(Ball_Y)<0.5;
             bool small_step = step < 10 ; 
-            double regReward = 0.01;
+            double regReward = 0.02;
 
             // std:: cout<<"Game Started\n"<<step<<" <-- step\n";
             if (count_steps != step && action >= 0 && (a != hfo :: MARK_PLAYER ||  unum > 0)) {
@@ -318,7 +318,7 @@ int main(int argc, char **argv) {
     std::string weightid;
     std::string loadFile="";
 
-    std::string freq_set = "8,32";
+    std::string freq_set = "4,32";
     for (int i = 0; i < argc; i++) {
         std::string param = std::string(argv[i]);
         std::cout << param << "\n";
