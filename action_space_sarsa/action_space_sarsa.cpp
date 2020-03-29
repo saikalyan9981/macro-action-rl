@@ -57,8 +57,8 @@ void printUsage() {
 double getReward(hfo::status_t status) {
     double reward;
     if (status == hfo::GOAL) reward = -1;
-    else if (status == hfo::CAPTURED_BY_DEFENSE) reward = 10;
-    else if (status == hfo::OUT_OF_BOUNDS) reward = 10;
+    else if (status == hfo::CAPTURED_BY_DEFENSE) reward = 1;
+    else if (status == hfo::OUT_OF_BOUNDS) reward = 1;
     else reward = 0;
     return reward;
 }
@@ -236,7 +236,8 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
                 reward += temp;
                 std::cout<<reward<<"<-- interim\n";
                 if (episode < numEpi) {
-                    sa->update(state, action, reward, discFac);
+                    // sa->update(state, action, reward, discFac);
+                    sa->update(state, action, temp, discFac);
                 }
             }
 
@@ -279,7 +280,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             std::cout<<reward<<"<-- eoe "<<episode<<"\n";
 
             if (episode < numEpi) {
-                sa->update(state, action, reward, discFac);
+                sa->update(state, action, temp, discFac);
             }
             sa->endEpisode();
             // std:: cout<<"episode_End: "<<episode<<"\n";
