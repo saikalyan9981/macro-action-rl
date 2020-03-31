@@ -1,18 +1,18 @@
 #!/bin/bash
 
 Lambda=0.9
-LearnR=0.0001
+LearnR=0.001
 Step=32
 Port=7260
 Seed=3
-TrainEpisodes=0
+TrainEpisodes=50000
 TestEpisodes=2000
 Eps=1
-Freq_set=1
+Freq_set=32
 
 
 stdbuf -oL ./HFO/bin/HFO --offense-npcs 3 --defense-npcs 2 --defense-agents 1 \
---port ${Port} --no-logging --no-sync --deterministic --trials 52000 --seed $Seed > logs/action_space_sarsa.log 2>&1 &
+--port ${Port} --no-logging --headless --deterministic --trials 52000 --seed $Seed > logs/action_space_sarsa.log 2>&1 &
 
 
 # --headless --nosync

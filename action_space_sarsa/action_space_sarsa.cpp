@@ -166,7 +166,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
     for (int episode = 0; episode < (numEpi + numEpiTest); episode++) {
         reward=0;
         if ((episode + 1) % 100 == 0) {
-            // eps*=0.99;
+            eps*=0.99;
             // learnR*=0.99;
             sa->update_eps(eps);
             // sa->update_learningRate(learnR);
@@ -198,9 +198,9 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             
 
             double Ball_X = state_vec[3], Ball_Y= state_vec[4];
-            bool in_micro_region = abs(Ball_X-1)<0.5 && abs(Ball_Y)<0.5;
+            bool in_micro_region = Ball_X < -0.2 && fabs(Ball_Y)<0.5;
             bool small_step = step < 10 ; 
-            double regReward = 0;
+            double regReward = 0.1;
 
             // std:: cout<<"Game Started\n"<<step<<" <-- step\n";
             if (count_steps != step && action >= 0 && (a != hfo :: MARK_PLAYER ||  unum > 0)) {

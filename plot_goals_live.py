@@ -38,6 +38,8 @@ def animate(i):
 
     ax1.clear()
     ax1.plot(yar,xplot)
+    ax1.set_title(algo)
+    ax1.set_xlabel("episodes")
     # print(xplot[-1])
 
 ani = animation.FuncAnimation(fig, animate, interval=1000)

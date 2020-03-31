@@ -1,6 +1,5 @@
 */weights*
 */*/weights*
-HFO/
 logs/
 log/
 */*.o
@@ -8,3 +7,90 @@ log/
 *.log
 */trace.txt
 */di_sarsa
+
+
+# Byte-compiled / optimized / DLL files
+HFO/__pycache__/
+HFO/*.py[cod]
+
+# C extensions
+HFO/*.so
+HFO/*.a
+HFO/*.o
+
+# Distribution / packaging
+HFO/.Python
+HFO/env/
+HFO/build/
+HFO/develop-eggs/
+HFO/dist/
+HFO/downloads/
+HFO/eggs/
+HFO/lib/
+HFO/lib64/
+HFO/parts/
+HFO/sdist/
+HFO/var/
+HFO/*.egg-info/
+HFO/.installed.cfg
+HFO/*.egg
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+HFO/*.manifest
+HFO/*.spec
+
+# Installer logs
+HFO/pip-log.txt
+HFO/pip-delete-this-directory.txt
+HFO/install_manifest.txt
+
+# Unit test / coverage reports
+HFO/htmlcov/
+HFO/.tox/
+HFO/.coverage
+HFO/.cache
+HFO/nosetests.xml
+HFO/coverage.xml
+
+# Translations
+HFO/*.mo
+HFO/*.pot
+
+# Django stuff:
+HFO/*.log
+
+# Sphinx documentation
+HFO/docs/_build/
+
+# PyBuilder
+HFO/target/
+
+# Make files
+HFO/CMakeCache.txt
+HFO/Makefile
+HFO/cmake_install.cmake
+HFO/CMakeFiles/
+
+# Executeables
+HFO/bin/teams/
+HFO/bin/rcssserver
+HFO/bin/soccerwindow2
+HFO/example/hfo_example_agent
+HFO/example/high_level_random_agent
+HFO/example/low_level_random_agent
+HFO/example/mid_level_move_agent
+HFO/example/mid_level_kick_agent
+HFO/example/mid_level_dribble_agent
+HFO/example/communication_agent
+HFO/example/hand_coded_defense_agent
+
+# Dependency directories
+HFO/librcsc-prefix/
+HFO/rcssserver-prefix/
+HFO/soccerwindow2-prefix/
+
+# Logs
+HFO/log/
+HFO/bin/log/
