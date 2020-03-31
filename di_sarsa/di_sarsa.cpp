@@ -273,7 +273,7 @@ int main(int argc, char **argv) {
     int suffix = 0;
     bool opponentPresent = true;
     int numOpponents = 0;
-    double eps = 0.99;
+    double eps = 0.01;
     double lambda = 0;
     int step = 10;
     bool load = false;

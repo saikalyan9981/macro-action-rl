@@ -7,7 +7,7 @@ Port=7160
 Seed=1
 TrainEpisodes=50000
 TestEpisodes=2000
-Eps=0.99
+Eps=0.01
 LoadFile=3v3_sa_seed_${Seed}/weights_0_di_sarsa_lambda_${Lambda}_step_${Step}_seed_${Seed}_episode_40000
 
 stdbuf -oL ./HFO/bin/HFO --offense-npcs 3 --defense-npcs 2 --defense-agents 1 \
