@@ -2,12 +2,12 @@
 
 Lambda=0.9
 LearnR=0.0001
-Step=28
+Step=32
 Port=7160
 Seed=1
 TrainEpisodes=50000
 TestEpisodes=2000
-Eps=0.01
+Eps=0.99
 # LoadFile=weights_0_di_sarsa_lambda_${Lambda}_step_${Step}_seed_${Seed}_episode_50000
 
 stdbuf -oL ./HFO/bin/HFO --offense-npcs 3 --defense-npcs 2 --defense-agents 1 \

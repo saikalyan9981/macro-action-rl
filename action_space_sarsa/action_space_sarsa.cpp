@@ -143,6 +143,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
     // load ? ("weights_" + std::to_string(suffix) +
                             // "_" + weightid) : "";
     loadWtFile = &s[0u];
+
     // std:: cout<<"loadFile"<<" "<<loadFile<<"\n"<<"loadWtFile"<<" "<<loadWtFile<<"\n";
     SarsaAgent *sa = new SarsaAgent(numF, numA, learnR, eps, lambda, fa, loadWtFile, "");
 
@@ -151,13 +152,12 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
     hfo::action_t a;
     double state[numF];
     int indices[numF];
-
-    selectFeatures(indices, numTMates, numOpponents, oppPres);
     int action = -1;
     int action_freq = -1;
     int step = 1;
     double reward=0;
     int no_of_offense = numTMates + 1;
+    selectFeatures(indices, numTMates, numOpponents, oppPres);
     hfo.connectToServer(hfo::HIGH_LEVEL_FEATURE_SET, "../HFO/bin/teams/base/config/formations-dt", port, "localhost", "base_right", false, "");
     std::queue <double> reward_queue;
     double reward_sum_2000 =0;
@@ -166,7 +166,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
     for (int episode = 0; episode < (numEpi + numEpiTest); episode++) {
         reward=0;
         if ((episode + 1) % 100 == 0) {
-            eps*=0.99;
+            // eps*=0.99;
             // learnR*=0.99;
             sa->update_eps(eps);
             // sa->update_learningRate(learnR);
@@ -200,7 +200,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             double Ball_X = state_vec[3], Ball_Y= state_vec[4];
             bool in_micro_region = abs(Ball_X-1)<0.5 && abs(Ball_Y)<0.5;
             bool small_step = step < 10 ; 
-            double regReward = 0.02;
+            double regReward = 0;
 
             // std:: cout<<"Game Started\n"<<step<<" <-- step\n";
             if (count_steps != step && action >= 0 && (a != hfo :: MARK_PLAYER ||  unum > 0)) {
@@ -236,7 +236,6 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
                 reward += temp;
                 std::cout<<reward<<"<-- interim\n";
                 if (episode < numEpi) {
-                    // sa->update(state, action, reward, discFac);
                     sa->update(state, action, reward, discFac);
                 }
             }

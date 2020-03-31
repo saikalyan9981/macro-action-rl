@@ -7,16 +7,16 @@ Seed=1
 TrainEpisodes=0
 TestEpisodes=2000
 Eps=0
-for i in {5000..50000..5000}
+# for i in {5000..50000..5000}
 
-# for i in 50000
+for i in 40000
 do
 
-    stdbuf -oL ./HFO/bin/HFO --offense-npcs 3 --defense-npcs 2 --defense-agents 1 \
-    --port $Port --no-logging --headless --deterministic --trials 52000 --seed $Seed > logs/di_sarsa.log 2>&1 &
-
     # stdbuf -oL ./HFO/bin/HFO --offense-npcs 3 --defense-npcs 2 --defense-agents 1 \
-    # --port $Port --no-logging --no-sync --deterministic --trials 52000 --seed $Seed > logs/di_sarsa.log 2>&1 &
+    # --port $Port --no-logging --headless --deterministic --trials 52000 --seed $Seed > logs/di_sarsa.log 2>&1 &
+
+    stdbuf -oL ./HFO/bin/HFO --offense-npcs 3 --defense-npcs 2 --defense-agents 1 \
+    --port $Port --no-logging --no-sync --deterministic --trials 52000 --seed $Seed > logs/di_sarsa.log 2>&1 &
 
     PID=$!
     cd di_sarsa
