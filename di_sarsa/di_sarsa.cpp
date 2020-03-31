@@ -150,7 +150,6 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
     selectFeatures(indices, numTMates, numOpponents, oppPres);
     std::queue <double> reward_queue;
     double reward_sum_2000 =0;
-    int total_steps = 0;
     for (int episode = 0; episode < numEpi+numEpiTest; episode++) {
         if ((episode + 1) % 100 == 0) {
             eps*=0.99;
@@ -176,15 +175,10 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
         double unum = -1;
         int num_steps_per_epi = 0;
         while (status == hfo::IN_GAME) {
-            total_steps++;
             num_steps_per_epi++;
             const std::vector<float>& state_vec = hfo.getState();
 
             // print ball position. 
-            double Ball_X = state_vec[3], Ball_Y= state_vec[4];
-            bool in_micro_region = Ball_X < -0.2 && fabs(Ball_Y)<0.5;
-        // std::cout<<"in_micro_region: "<<in_micro_region<<" Pos_X: "<<state_vec[0]<<" Pos_Y: "<<state_vec[1] <<" Ball_X: "<<Ball_X<<" Ball_Y: "<<Ball_Y<<" total_steps: "<<total_steps<< " episode: "<<episode<<"\n";
-        if (in_micro_region || 1){
 
             if (count_steps != step && action >= 0 && (a != hfo :: MARK_PLAYER ||  unum > 0)) {
                 count_steps ++;
@@ -239,13 +233,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             for (int state_vec_fc = 0; state_vec_fc < state_vec.size(); state_vec_fc++) {
                 s += std::to_string(state_vec[state_vec_fc]) + ",";
             }
-            s += "UNUM" + std::to_string(unum) + "\n";
-        }
-        else{
-            a = toAction(3, state_vec);
-            hfo.act(a);
-        }
-
+            s += "UNUM" + std::to_string(unum) + "\n";;
             status = hfo.step();
 
         }
