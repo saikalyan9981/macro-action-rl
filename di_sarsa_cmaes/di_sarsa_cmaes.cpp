@@ -11,20 +11,9 @@
 
 // Before running this program, first Start HFO server:
 // $./bin/HFO --offense-agents numAgents
+
 std::fstream trace;
 
-std::vector<int> process_csv(std::string freq_set) {
-    std::vector<int> vect;
-    std::stringstream ss(freq_set);
-    int i;
-    while (ss >> i)
-    {
-        vect.push_back(i);
-        if (ss.peek() == ',')
-            ss.ignore();
-    }
-    return vect;
-}
 
 void printUsage() {
     std::cout << "Usage:123 ./high_level_sarsa_agent [Options]" << std::endl;
@@ -43,28 +32,29 @@ void printUsage() {
     std::cout << "  --suffix <int>           Suffix for weights files" << std::endl;
     std::cout << "                           Default: 0" << std::endl;
     std::cout << "  --noOpponent             Sets opponent present flag to false" << std::endl;
+    std::cout << "  --step                   Sets the persistent step size" << std::endl;
     std::cout << "  --eps                    Sets the exploration rate" << std::endl;
+    std::cout << "  --lambda                 Lambda to be used in SARSA" << std::endl;
     std::cout << "  --numOpponents           Sets the number of opponents" << std::endl;
     std::cout << "  --load                   If set, load weights from specified weight file" << std::endl;
-    std::cout << "  --loadFile               If set, load weights from specified weight file" << std::endl;
-    
     std::cout << "  --weightId               Sets the given Id for weight File" << std::endl;
     std::cout << "  --help                   Displays this help and exit" << std::endl;
-    std::cout << "  --freq_set               comma separated list of frequencies" << std::endl;
 }
 
 // Returns the reward for SARSA based on current state
-double getReward(hfo::status_t status) {
+inline double getReward(hfo::status_t status) {
     double reward;
-    if (status == hfo::GOAL) reward = -10;
-    else if (status == hfo::CAPTURED_BY_DEFENSE) reward = 10;
-    else if (status == hfo::OUT_OF_BOUNDS) reward = 10;
+    if (status == hfo::GOAL) reward = -1;
+    else if (status == hfo::CAPTURED_BY_DEFENSE) reward = 1;
+    else if (status == hfo::OUT_OF_BOUNDS) reward = 1;
     else reward = 0;
     return reward;
 }
 
 // Fill state with only the required features from state_vec
+// The length of the state vector is 10+6*T+3*O {T is the number of opponents and O is the number of opponents}
 void selectFeatures(int* indices, int numTMates, int numOpponents, bool oppPres) {
+
     int stateIndex = 0;
 
     // If no opponents ignore features Distance to Opponent
@@ -87,7 +77,7 @@ void selectFeatures(int* indices, int numTMates, int numOpponents, bool oppPres)
 }
 
 // Convert int to hfo::Action
-hfo::action_t toAction(int action, const std::vector<float>& state_vec) {
+inline hfo::action_t toAction(int action, const std::vector<float>& state_vec) {
     hfo::action_t a;
     switch (action) {
     case 0:
@@ -113,18 +103,20 @@ hfo::action_t toAction(int action, const std::vector<float>& state_vec) {
 }
 
 void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int numEpiTest, double learnR, double lambda,
-                  int suffix, bool oppPres, std::vector<int> frequencies, double eps, bool load, std::string weightid,std::string loadFile) {
-    // Number of features
+                  int suffix, bool oppPres, double eps, int step, bool load, std::string weightid,std:: string loadFile) {
     trace.open("trace.txt", std::fstream::out);
+    std::cout<<"lambda: "<<lambda<<"\n";
 
+    // Number of features
     int numF = oppPres ? (8 + 3 * numTMates + 2 * numOpponents) : (3 + 3 * numTMates);
     // Number of actions
-    int numA = (5 + numOpponents) * frequencies.size(); //DEF_GOAL+MOVE+GTB+NOOP+RATG+MP(unum)
+    int numA = 5 + numOpponents; //DEF_GOAL+MOVE+GTB+NOOP+RATG+MP(unum)
 
     // Other SARSA parameters
-    // eps = 0.01;
+    // Changed Remember testing keep it 0
     double discFac = 1;
     //double lambda=0.9375; THIS IS THE ACTUAL VALUE
+    // double lambda = 0;
     // Tile coding parameter
     double resolution = 0.1;
 
@@ -141,37 +133,33 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
     char *loadWtFile;
     std::string s = loadFile;
     // load ? ("weights_" + std::to_string(suffix) +
-                            // "_" + weightid) : "";
+    //                         "_" + weightid) : "";
     loadWtFile = &s[0u];
-
-    // std:: cout<<"loadFile"<<" "<<loadFile<<"\n"<<"loadWtFile"<<" "<<loadWtFile<<"\n";
     SarsaAgent *sa = new SarsaAgent(numF, numA, learnR, eps, lambda, fa, loadWtFile, "");
 
     hfo::HFOEnvironment hfo;
     hfo::status_t status;
     hfo::action_t a;
-    double state[numF];
     int indices[numF];
+    double state[numF];
     int action = -1;
-    int action_freq = -1;
-    int step = 1;
-    double reward=0;
+    double reward;
+    double total_reward_episode;
     int no_of_offense = numTMates + 1;
-    selectFeatures(indices, numTMates, numOpponents, oppPres);
     hfo.connectToServer(hfo::HIGH_LEVEL_FEATURE_SET, "../HFO/bin/teams/base/config/formations-dt", port, "localhost", "base_right", false, "");
+    selectFeatures(indices, numTMates, numOpponents, oppPres);
     std::queue <double> reward_queue;
     double reward_sum_2000 =0;
-
-
-    for (int episode = 0; episode < (numEpi + numEpiTest); episode++) {
-        reward=0;
+    for (int episode = 0; episode < numEpi+numEpiTest; episode++) {
         if ((episode + 1) % 100 == 0) {
             eps*=0.99;
             // learnR*=0.99;
             sa->update_eps(eps);
             // sa->update_learningRate(learnR);
-        }
 
+        }
+        // sa->update_learningRate(1./(episode+1));
+        total_reward_episode = 0;
         if ((episode + 1) % 5000 == 0) {
             // Weights file
             char *wtFile;
@@ -183,58 +171,37 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
         int count = 0;
         status = hfo::IN_GAME;
         action = -1;
-        action_freq = -1;
-        step = 1;
         int count_steps = 0;
         double unum = -1;
         int num_steps_per_epi = 0;
-
         while (status == hfo::IN_GAME) {
             num_steps_per_epi++;
-            if (action_freq != -1) {
-                step = frequencies[action_freq];
-            }
             const std::vector<float>& state_vec = hfo.getState();
-            
 
-            double Ball_X = state_vec[3], Ball_Y= state_vec[4];
-            bool in_micro_region = Ball_X < -0.2 && fabs(Ball_Y)<0.5;
-            bool small_step = step < 10 ; 
-            double regReward = 0.1;
+            // print ball position. 
 
-            // std:: cout<<"Game Started\n"<<step<<" <-- step\n";
             if (count_steps != step && action >= 0 && (a != hfo :: MARK_PLAYER ||  unum > 0)) {
                 count_steps ++;
-                // std:: cout<<"Micro Action start\n";  
-                if (in_micro_region ^ small_step){
-                    reward -= regReward;
-                }
-                else{
-                    reward += regReward;
-                }
-
                 if (a == hfo::MARK_PLAYER) {
+                    time_t now = time(0);
+                    // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
                     hfo.act(a, unum);
-                    // std::cout << "MARKING" << unum <<"\n";
+                    //std::cout << "MARKING" << unum <<"\n";
                 } else {
+                    time_t now = time(0);
+                    // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
                     hfo.act(a);
                 }
                 status = hfo.step();
-                // std:: cout<<"Micro Action done\n";
-
                 continue;
 
             } else {
                 count_steps = 0;
             }
 
-            // std:: cout<<"Macro Action done\n";
-
-
-            if(action != -1 && action_freq != -1) {
-                double temp = getReward(status);
-                reward += temp;
-                std::cout<<reward<<"<-- interim\n";
+            if(action != -1) {
+                reward = getReward(status);
+                total_reward_episode+=reward;
                 if (episode < numEpi) {
                     sa->update(state, action, reward, discFac);
                 }
@@ -244,58 +211,52 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             for (int i = 0; i < numF; i++) {
                 state[i] = state_vec[indices[i]];
             }
-            // std:: cout<<"state filled\n";
-            // Get raw action
-            int combined_action = sa->selectAction(state);
-            // std:: cout<<"combined action "<<combined_action<<" \n";
-            action = combined_action % frequencies.size();
-            // std:: cout<<"action "<<action<<" \n";
-            // std:: cout<<"frequencies.size() "<<frequencies.size()<<" \n";
-            
-            action_freq = combined_action / frequencies.size();
-            // std:: cout<<"action_freq "<<action_freq<<" \n";
 
-            // std:: cout<<"got raw action\n";
+            // Get raw action
+            action = sa->selectAction(state);
+
             // Get hfo::Action
             a = toAction(action, state_vec);
-            // std:: cout<<"got action\n";
             if (a == hfo::MARK_PLAYER) {
                 unum = state_vec[(state_vec.size() - 1 - (action - 5) * 3)];
+                time_t now = time(0);
+                // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
                 hfo.act(a, unum);
             } else {
+                time_t now = time(0);
+                // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
                 hfo.act(a);
+
             }
+            count_steps++;
             std::string s = std::to_string(action);
             for (int state_vec_fc = 0; state_vec_fc < state_vec.size(); state_vec_fc++) {
                 s += std::to_string(state_vec[state_vec_fc]) + ",";
             }
             s += "UNUM" + std::to_string(unum) + "\n";;
             status = hfo.step();
+
         }
+        // std :: cout <<":::::::::::::" << num_steps_per_epi<< " "<<step << " "<<"\n";
         // End of episode
         if(action != -1) {
-            double temp = getReward(status);
-            reward += temp;
-            std::cout<<reward<<"<-- eoe "<<episode<<"\n";
-
+            reward = getReward(status);
+            total_reward_episode+=reward;
             if (episode < numEpi) {
                 sa->update(state, action, reward, discFac);
             }
             sa->endEpisode();
-            // std:: cout<<"episode_End: "<<episode<<"\n";
-
         }
-        reward_queue.push(reward);
-        reward_sum_2000 += reward;
+
+        reward_queue.push(total_reward_episode);
+        reward_sum_2000 += total_reward_episode;
         if(reward_queue.size()>2000){
             double reward_first =  reward_queue.front();
             reward_sum_2000 -= reward_first;
             reward_queue.pop();
         }
-        trace<<"episode: "<<episode<<" , "<<"total_reward_episode: "<<reward<<" , "<<"reward: "<<reward_sum_2000/reward_queue.size()<<std::endl;
-
-
-
+        
+        trace<<"episode: "<<episode<<" , "<<"total_reward_episode: "<<total_reward_episode<<" , "<<"reward: "<<reward_sum_2000/reward_queue.size()<<std::endl;
     }
 
     delete sa;
@@ -312,16 +273,13 @@ int main(int argc, char **argv) {
     int suffix = 0;
     bool opponentPresent = true;
     int numOpponents = 0;
-    double eps = 0.99;
+    double eps = 0.01;
     double lambda = 0;
+    int step = 10;
     bool load = false;
-    std::string weightid;
-
-    // making two load files
-    // std::string loadFile="";
+    // Max. number of agents considered = 2. 
     std:: string loadFile[2] = {"", ""};
-
-    std::string freq_set = "4,32";
+    std::string weightid;
     for (int i = 0; i < argc; i++) {
         std::string param = std::string(argv[i]);
         std::cout << param << "\n";
@@ -348,21 +306,18 @@ int main(int argc, char **argv) {
             opponentPresent = false;
         } else if(param == "--eps") {
             eps = atof(argv[++i]);
-        } else if(param == "--numOpponents") {
-            numOpponents = atoi(argv[++i]);
         } else if(param == "--lambda") {
             lambda = atof(argv[++i]);
+        } else if(param == "--numOpponents") {
+            numOpponents = atoi(argv[++i]);
+        } else if(param == "--step") {
+            step = atoi(argv[++i]);
         } else if(param == "--load") {
             load = true;
         } else if(param == "--weightId") {
             weightid = std::string(argv[++i]);
-        } else if(param == "--freq_set") {
-            freq_set = std::string(argv[++i]);
-        } 
-        // else if(param == "--loadFile") {
-        //     loadFile = std::string(argv[++i]);
-        // }
-        else if(param == "--loadFile") {
+        }
+         else if(param == "--loadFile") {
             loadFile[0] = std::string(argv[++i]);
         }
          else if(param == "--loadFile1") {
@@ -373,14 +328,13 @@ int main(int argc, char **argv) {
             return 0;
         }
     }
-
-    std::vector<int> frequencies = process_csv(freq_set);
     int numTeammates = numOpponents - 1;
     std::thread agentThreads[numAgents];
     for (int agent = 0; agent < numAgents; agent++) {
+    	std::cout << loadFile[0] << "loading agent\n"; 
         agentThreads[agent] = std::thread(offenseAgent, basePort,
                                           numTeammates, numOpponents, numEpisodes, numEpisodesTest, learnR, lambda,
-                                          agent, opponentPresent, frequencies, eps, load, weightid,loadFile[agent]);
+                                          agent, opponentPresent, eps, step, load, weightid,loadFile[agent]);
         sleep(5);
     }
     for (int agent = 0; agent < numAgents; agent++) {
@@ -388,4 +342,3 @@ int main(int argc, char **argv) {
     }
     return 0;
 }
-

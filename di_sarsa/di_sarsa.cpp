@@ -328,7 +328,7 @@ int main(int argc, char **argv) {
             return 0;
         }
     }
-    int numTeammates = numOpponents - 1;
+    int numTeammates = numOpponents - 1;//? wutt
     std::thread agentThreads[numAgents];
     for (int agent = 0; agent < numAgents; agent++) {
     	std::cout << loadFile[0] << "loading agent\n"; 
