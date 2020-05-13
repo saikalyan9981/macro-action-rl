@@ -1,8 +1,13 @@
+# check float point errors, workers
+import sys
+sys.path.insert(1,'/home/kalyan/SEMESTER_8/RL/macro-action-rl/HFO')
 from es import *
 from config import *
 import argparse
 from hfo import *
 from model import make_model #add roll out in it maybe or take inspiration from simulate
+import numpy as np
+import json
 
 def getReward(s):
   reward=0
@@ -80,7 +85,8 @@ def simulate(model,step):
   unum=-1.
   reward_episode = 0
   status=IN_GAME
-  while(staus==IN_GAME):
+  a=0
+  while(status==IN_GAME):
     state_vec = hfo.getState()
     if (count_steps != step and action >= 0 and (a !=  MARK_PLAYER or  unum > 0)):
       count_steps+=1
@@ -101,7 +107,7 @@ def simulate(model,step):
     action = model.get_action(state)
     a = toAction(action)
     if (a == MARK_PLAYER):
-      unum = state_vec[(state_vec.size() - 1 - (action - 5) * 3)]
+      unum = state_vec[(len(state_vec) - 1 - (action - 5) * 3)]
       hfo.act(a, unum)
     else:
       hfo.act(a)
@@ -122,27 +128,32 @@ def simulate(model,step):
   return reward_list
 
 def rollout(model,step,trails):
-  model.env.seed(0)
+  # model.env.seed(0)
   total_reward =0
   for i in range(trails):
     reward = simulate(model,step)
     total_reward+=reward[0]
-  return total_reward
+  return total_reward/trails
     
 
 
 if __name__ == '__main__':
+  file1 = open("reward_logs.txt","w") 
+
+  print("hello",file=file1)
   parser = argparse.ArgumentParser()
   parser.add_argument('--port', type=int, default=6000)
-  parser.add_argument('--numAgents', type=int, default=0)
-  parser.add_argument('--numTMates', type=int, default=0)
+  parser.add_argument('--numAgents', type=int, default=1)
+  parser.add_argument('--numTMates', type=int, default=2)
 
-  parser.add_argument('--numOpponents', type=int, default=1)
-  parser.add_argument('--numTrails',type=int,default=100)
-  parser.add_argument('--numEpisodesTrain', type=int, default=500)
-  parser.add_argument('--numEpisodesTest', type=int, default=2000)
+  parser.add_argument('--numOpponents', type=int, default=3)
+  parser.add_argument('--numTrails',type=int,default=400)
+  # parser.add_argument('--numEpisodesTrain', type=int, default=500)
+  # parser.add_argument('--numEpisodesTest', type=int, default=2000)
   parser.add_argument('--step', type=int, default=32)
   parser.add_argument('--sigma_init', type=float, default=0.10, help='sigma_init')
+  parser.add_argument('--threshold', type=float, default=0.7, help='threshold')
+
   parser.add_argument('--population', type=int, default=10, help='population')
   args=parser.parse_args()
 
@@ -153,7 +164,7 @@ if __name__ == '__main__':
   Num_Actions = 5+ Num_Opponents
   hfo_game = Game(env_name='hfo_game',
       input_size=Num_Features,
-      outpgut_size=Num_Actions,
+      output_size=Num_Actions,
       time_factor=0,
       layers=[10, 0],
       activation='softmax',
@@ -164,20 +175,22 @@ if __name__ == '__main__':
   games['hfo_game'] = hfo_game
   model=make_model(hfo_game)
   num_params = model.param_count
-  print("size of model", num_params)
+  print("size of model", num_params,file=file1)
   global hfo
   hfo = HFOEnvironment()
   hfo.connectToServer(HIGH_LEVEL_FEATURE_SET, "../HFO/bin/teams/base/config/formations-dt", args.port, "localhost", "base_right", False, "")
   cma = CMAES(num_params,sigma_init=args.sigma_init,popsize=args.population)
   es = cma
-
-  while True:
+  j=0
+  while j<100:
+    j+=1
     solutions = es.ask()
     fitlist=np.zeros(es.popsize)
     for i in range(es.popsize):
       model.set_model_params(solutions[i])
       fitlist[i]=rollout(model,args.step,args.numTrails)
 
+    print("fitlist",fitlist,file=file1)
     es.tell(fitlist)
     es_solution = es.result()
 
@@ -185,10 +198,14 @@ if __name__ == '__main__':
     reward = es_solution[1] # best reward
     curr_reward = es_solution[2] # best of the current batch
     # model.set_model_params(np.array(model_params).round(4))
-    print("reward",reward,"curr_reward",curr_reward)
+    print("reward",reward,"curr_reward",curr_reward,file=file1)
 
-    if reward>10: #args
+    if reward>args.threshold: #args
       break
+  
+  with open('model_params.json', 'w') as fout:
+    json.dump(model_params, fout)
+  
 
 
 

@@ -58,5 +58,5 @@
         "cinttypes": "cpp",
         "typeindex": "cpp"
     },
-    "python.pythonPath": "/home/saikalyan/anaconda3/envs/HFO_Setting/bin/python"
+    "python.pythonPath": "/usr/bin/python3"
 }

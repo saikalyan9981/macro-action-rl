@@ -6,10 +6,10 @@ import random
 import json
 import sys
 import config
-from env import make_env
+# from env import make_env
 import time
 
-from gym.wrappers import Monitor
+# from gym.wrappers import Monitor
 
 from nn import sigmoid, relu, passthru, softmax, sample, RNNModel
 
@@ -85,12 +85,14 @@ class Model:
     elif game.activation == 'sigmoid':
       self.activations = [np.tanh, np.tanh, sigmoid]
     elif game.activation == 'softmax':
-      self.activations = [np.tanh, np.tanh, softmax]
+      self.activations = [np.tanh, np.tanh, softmax]        
       self.sample_output = True
     elif game.activation == 'passthru':
       self.activations = [np.tanh, np.tanh, passthru]
     else:
       self.activations = [np.tanh, np.tanh, np.tanh]
+    if self.layer_2==0:
+      del self.activations[1]
 
     self.weight = []
     self.bias = []

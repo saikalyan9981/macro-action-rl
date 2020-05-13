@@ -5,7 +5,7 @@ import random
 import json
 import cma
 from es import SimpleGA, CMAES, PEPG, OpenES
-from env import make_env
+# from env import make_env
 
 def sigmoid(x):
   return 1 / (1 + np.exp(-x))
