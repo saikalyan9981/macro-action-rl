@@ -189,6 +189,8 @@ def compress_input_dct(obs):
   new_obs /= float(obs.shape[2])
   return new_obs.flatten()
 
+
+
 def simulate(model, train_mode=False, render_mode=True, num_episode=5, seed=-1, max_len=-1):
 
   reward_list = []

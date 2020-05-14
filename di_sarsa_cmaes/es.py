@@ -129,7 +129,7 @@ class CMAES:
 
   def result(self): # return best params so far, along with historically best reward, curr reward, sigma
     r = self.es.result
-    return (r[0], -r[1], -r[1], r[6])
+    return (r[0], -r[1], -r[2], r[6])
 
 class SimpleGA:
   '''Simple Genetic Algorithm.'''

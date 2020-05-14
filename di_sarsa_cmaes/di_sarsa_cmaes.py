@@ -13,7 +13,7 @@ def getReward(s):
   reward=0
   #--------------------------- 
   if s==GOAL:
-    reward=-1
+    reward=0
   #--------------------------- 
   elif s==CAPTURED_BY_DEFENSE:
     reward=+1
@@ -130,9 +130,13 @@ def simulate(model,step):
 def rollout(model,step,trails):
   # model.env.seed(0)
   total_reward =0
+  num_episodes=0
   for i in range(trails):
     reward = simulate(model,step)
     total_reward+=reward[0]
+    # num_episodes += reward[1]
+
+  print("episodes",trails,"total_reward",total_reward,file=file1,flush=True)
   return total_reward/trails
     
 
@@ -147,12 +151,12 @@ if __name__ == '__main__':
   parser.add_argument('--numTMates', type=int, default=2)
 
   parser.add_argument('--numOpponents', type=int, default=3)
-  parser.add_argument('--numTrails',type=int,default=100)
+  parser.add_argument('--numTrails',type=int,default=300)
   # parser.add_argument('--numEpisodesTrain', type=int, default=500)
   # parser.add_argument('--numEpisodesTest', type=int, default=2000)
   parser.add_argument('--step', type=int, default=32)
   parser.add_argument('--sigma_init', type=float, default=0.10, help='sigma_init')
-  parser.add_argument('--threshold', type=float, default=0.4,help='threshold')
+  parser.add_argument('--threshold', type=float, default=0.7,help='threshold')
 
   parser.add_argument('--population', type=int, default=10, help='population')
   args=parser.parse_args()
@@ -184,11 +188,13 @@ if __name__ == '__main__':
   cma = CMAES(num_params,sigma_init=args.sigma_init,popsize=args.population)
   es = cma
   j=0
-  while j<10:
+  while j<100:
     j+=1
     solutions = es.ask()
     fitlist=np.zeros(es.popsize)
     for i in range(es.popsize):
+      print("j: ",j,"i: ",i, "started",file=file1,flush=True)
+
       model.set_model_params(solutions[i])
       fitlist[i]=rollout(model,args.step,args.numTrails)
 
