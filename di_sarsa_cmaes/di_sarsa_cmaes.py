@@ -147,17 +147,19 @@ if __name__ == '__main__':
   parser.add_argument('--numTMates', type=int, default=2)
 
   parser.add_argument('--numOpponents', type=int, default=3)
-  parser.add_argument('--numTrails',type=int,default=400)
+  parser.add_argument('--numTrails',type=int,default=100)
   # parser.add_argument('--numEpisodesTrain', type=int, default=500)
   # parser.add_argument('--numEpisodesTest', type=int, default=2000)
   parser.add_argument('--step', type=int, default=32)
   parser.add_argument('--sigma_init', type=float, default=0.10, help='sigma_init')
-  parser.add_argument('--threshold', type=float, default=0.7, help='threshold')
+  parser.add_argument('--threshold', type=float, default=0.4,help='threshold')
 
   parser.add_argument('--population', type=int, default=10, help='population')
   args=parser.parse_args()
 
-  global Num_Features, Num_Actions, Num_Opponents,Num_Teammates
+  global Num_Features, Num_Actions, Num_Opponents,Num_Teammates,PRECISION
+  PRECISION = 10000
+
   Num_Opponents =  args.numOpponents
   Num_Teammates = args.numTMates
   Num_Features = 8+ 3*Num_Teammates + 2*Num_Opponents if [args.numOpponents > 0] else 3+3*Num_Teammates
@@ -175,14 +177,14 @@ if __name__ == '__main__':
   games['hfo_game'] = hfo_game
   model=make_model(hfo_game)
   num_params = model.param_count
-  print("size of model", num_params,file=file1)
+  print("size of model", num_params,file=file1,flush=True)
   global hfo
   hfo = HFOEnvironment()
   hfo.connectToServer(HIGH_LEVEL_FEATURE_SET, "../HFO/bin/teams/base/config/formations-dt", args.port, "localhost", "base_right", False, "")
   cma = CMAES(num_params,sigma_init=args.sigma_init,popsize=args.population)
   es = cma
   j=0
-  while j<100:
+  while j<10:
     j+=1
     solutions = es.ask()
     fitlist=np.zeros(es.popsize)
@@ -190,7 +192,7 @@ if __name__ == '__main__':
       model.set_model_params(solutions[i])
       fitlist[i]=rollout(model,args.step,args.numTrails)
 
-    print("fitlist",fitlist,file=file1)
+    print("fitlist",np.array(fitlist).round(4),file=file1,flush=True)
     es.tell(fitlist)
     es_solution = es.result()
 
@@ -198,14 +200,14 @@ if __name__ == '__main__':
     reward = es_solution[1] # best reward
     curr_reward = es_solution[2] # best of the current batch
     # model.set_model_params(np.array(model_params).round(4))
-    print("reward",reward,"curr_reward",curr_reward,file=file1)
+    print("reward",reward,"curr_reward",curr_reward,file=file1,flush=True)
 
-    if reward>args.threshold: #args
-      break
+    # if reward>args.threshold: #args
+    #   break
   
-  with open('model_params.json', 'w') as fout:
-    json.dump(model_params, fout)
-  
+  with open("model_params.json", 'wt') as out:
+    json.dump([np.array(es.current_param()).round(4).tolist()], out, sort_keys=True, indent=2, separators=(',', ': '))
+
 
 
 
