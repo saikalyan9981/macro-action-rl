@@ -423,7 +423,7 @@ def mpi_fork(n):
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description=('Train policy on OpenAI Gym environment '
                                                 'using pepg, ses, openes, ga, cma'))
-  parser.add_argument('gamename', type=str, help='robo_pendulum, robo_ant, robo_humanoid, etc.')
+  parser.add_argument('--gamename', type=str, help='robo_pendulum, robo_ant, robo_humanoid, etc.')
   parser.add_argument('-o', '--optimizer', type=str, help='ses, pepg, openes, ga, cma.', default='cma')
   parser.add_argument('-e', '--num_episode', type=int, default=1, help='num episodes per trial')
   parser.add_argument('--eval_steps', type=int, default=25, help='evaluate every eval_steps step')

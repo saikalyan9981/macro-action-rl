@@ -1,6 +1,7 @@
 
 
 from mpi4py import MPI
+
 import numpy as np
 import json
 import os
@@ -13,6 +14,19 @@ from es import CMAES
 import argparse
 import time
 from config import *
+
+def make_hfo_env(port):
+  global hfoe
+  sprint("port",port)
+  # subprocess.Popen(["stdbuf", "-oL", "../HFO/bin/HFO","--offense-npcs", "3", "--defense-npcs", "2", "--defense-agents", "1", \
+  # "--port", str(port),"--no-logging", "--headless", "--deterministic" ,"--trials", "52000"])
+  # ls_output=subprocess.Popen(["sleep", "100"])
+  # exit()
+  # , ">" , "../logs/di_sarsa_cmaes_workers"+str(port)+".log", "2>&1", "&"])
+  # sprint("hfoe creation")
+  hfoe = HFOEnvironment()
+  hfoe.connectToServer(HIGH_LEVEL_FEATURE_SET, "../HFO/bin/teams/base/config/formations-dt", port, "localhost", "base_right", False, "")
+  # sprint("leaving","make_hfo_env")
 
 def getReward(s):
   reward=0
@@ -84,7 +98,8 @@ def toAction(action):
 #     total_reward += reward
 #   return total_reward
 def simulate_hfo(model,num_episode=10):
-  
+  sprint("in simulate_hfo")
+
   reward_list=[]
   t_list=[]
   for i in range(num_episode):
@@ -97,14 +112,14 @@ def simulate_hfo(model,num_episode=10):
     t=0
     while(status==IN_GAME):
       t+=1
-      state_vec = hfo.getState()
+      state_vec = hfoe.getState()
       if (count_steps != step_size and action >= 0 and (a !=  MARK_PLAYER or  unum > 0)):
         count_steps+=1
         if (a == MARK_PLAYER):
-            hfo.act(a, unum)
+            hfoe.act(a, unum)
         else:
-            hfo.act(a)
-        status = hfo.step()
+            hfoe.act(a)
+        status = hfoe.step()
         continue
       else:
         count_steps = 0
@@ -118,16 +133,16 @@ def simulate_hfo(model,num_episode=10):
       a = toAction(action)
       if (a == MARK_PLAYER):
         unum = state_vec[(len(state_vec) - 1 - (action - 5) * 3)]
-        hfo.act(a, unum)
+        hfoe.act(a, unum)
       else:
-        hfo.act(a)
+        hfoe.act(a)
         count_steps+=1
         # std::string s = std::to_string(action);
         # for (int state_vec_fc = 0; state_vec_fc < state_vec.size(); state_vec_fc++) {
         #     s += std::to_string(state_vec[state_vec_fc]) + ",";
         # }
         # s += "UNUM" + std::to_string(unum) + "\n";;
-        status = hfo.step()
+        status = hfoe.step()
 
     # End of episode
     if(action != -1):
@@ -136,7 +151,7 @@ def simulate_hfo(model,num_episode=10):
     
     reward_list.append(reward_episode)
     t_list.append(t)
-  return reward_list
+  return reward_list,t_list
 
 ### ES related code
 num_episode = 1
@@ -156,7 +171,6 @@ batch_mode = 'mean'
 
 # seed for reproducibility
 seed_start = 0
-
 ### name of the file (can override):
 filebase = None
 
@@ -176,6 +190,8 @@ RESULT_PACKET_SIZE = 4*num_worker_trial
 ###
 
 def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
+  global population, filebase, game, model, num_params, es, PRECISION, SOLUTION_PACKET_SIZE, RESULT_PACKET_SIZE
+
   population = num_worker * num_worker_trial
   filebase = 'log/'+gamename+'.'+optimizer+'.'+str(num_episode)+'.'+str(population)
   hfo_game = Game(env_name='hfo_game',
@@ -192,6 +208,7 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
   model = make_model(game)
   num_params = model.param_count
   print("size of model", num_params)
+  print("optimizer",optimizer)
   
   if optimizer == 'ses':
     ses = PEPG(num_params,
@@ -248,7 +265,8 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
 ###
 
 def sprint(*args):
-  print(args) # if python3, can do print(*args)
+  # print(args,file=file1) # if python3, can do print(*args)
+  print(args)
   sys.stdout.flush()
 
 class OldSeeder:
@@ -313,7 +331,7 @@ def decode_result_packet(packet):
   return result
 
 def worker(weights, seed, train_mode_int=1, max_len=-1):
-
+  sprint("in worker")
   train_mode = (train_mode_int == 1)
   model.set_model_params(weights)
   reward_list, t_list = simulate_hfo(model,num_episode=num_episode)
@@ -325,12 +343,21 @@ def worker(weights, seed, train_mode_int=1, max_len=-1):
   return reward, t
 
 def slave():
-  model.make_env()
+  # port
+  sprint("in slave")
+
+  port=current_port.next_seed()+10*rank
+  make_hfo_env(port)
+  # model.make_env()
   packet = np.empty(SOLUTION_PACKET_SIZE, dtype=np.int32)
+  t=0
   while 1:
+    t+=1
     comm.Recv(packet, source=0)
     assert(len(packet) == SOLUTION_PACKET_SIZE)
     solutions = decode_solution_packet(packet)
+    # sprint("in decode_solution_packet",solutions)
+
     results = []
     for solution in solutions:
       worker_id, jobidx, seed, train_mode, max_len, weights = solution
@@ -348,6 +375,7 @@ def slave():
 
 def send_packets_to_slaves(packet_list):
   num_worker = comm.Get_size()
+  # print("packet_list",packet_list,"num_worker",num_worker)
   assert len(packet_list) == num_worker-1
   for i in range(1, num_worker):
     packet = packet_list[i-1]
@@ -393,7 +421,7 @@ def evaluate_batch(model_params, max_len=-1):
   return np.mean(reward_list)
 
 def master():
-
+  sprint("in master")
   start_time = int(time.time())
   sprint("training", gamename)
   sprint("population", es.popsize)
@@ -402,13 +430,17 @@ def master():
   sys.stdout.flush()
 
   seeder = Seeder(seed_start)
+  
 
   filename = filebase+'.json'
   filename_log = filebase+'.log.json'
   filename_hist = filebase+'.hist.json'
   filename_best = filebase+'.best.json'
 
-  model.make_env()
+  # model.make_env()
+  # port=current_port.next_seed()+rank
+  # make_hfo_env(port)
+
 
   t = 0
 
@@ -419,7 +451,7 @@ def master():
 
   max_len = -1 # max time steps (-1 means ignore)
 
-  while t<5:
+  while t<total_steps:
     t += 1
 
     solutions = es.ask()
@@ -449,7 +481,7 @@ def master():
     reward = es_solution[1] # best reward
     curr_reward = es_solution[2] # best of the current batch
     model.set_model_params(np.array(model_params).round(4))
-
+    sprint("iteration",t,"reward",reward,"reward_list",reward_list)
     r_max = int(np.max(reward_list)*100)/100.
     r_min = int(np.min(reward_list)*100)/100.
 
@@ -497,12 +529,10 @@ def master():
 
 
 def main(args):
-  global gamename, optimizer, num_episode, eval_steps, num_worker, num_worker_trial, antithetic, seed_start, retrain_mode, cap_time_mode
-  global Num_Features, Num_Actions, Num_Opponents,Num_Teammates, population, filebase, game, model, num_params, es, PRECISION, SOLUTION_PACKET_SIZE, RESULT_PACKET_SIZE,step_size
-  global hfo
-  hfo = HFOEnvironment()
-  hfo.connectToServer(HIGH_LEVEL_FEATURE_SET, "../HFO/bin/teams/base/config/formations-dt", args.port, "localhost", "base_right", False, "")
 
+  global gamename, optimizer, num_episode, eval_steps, num_worker, num_worker_trial, antithetic, seed_start, retrain_mode, cap_time_mode,current_port
+  global Num_Features, Num_Actions, Num_Opponents,Num_Teammates,step_size,total_steps
+  
   gamename = args.gamename
   optimizer = args.optimizer
   num_episode = args.num_episode
@@ -513,7 +543,9 @@ def main(args):
   retrain_mode = (args.retrain == 1)
   cap_time_mode= (args.cap_time == 1)
   seed_start = args.seed_start
+  current_port=OldSeeder(args.port_start)
   step_size = args.step
+  total_steps=args.total_steps
 
   Num_Opponents =  args.numOpponents
   Num_Teammates = args.numTMates
@@ -549,7 +581,7 @@ def mpi_fork(n):
     global nworkers, rank
     nworkers = comm.Get_size()
     rank = comm.Get_rank()
-    print('assigning the rank and nworkers', nworkers, rank)
+    print('assigning the rank and nworkers',rank, nworkers)
     return "child"
 
 if __name__ == "__main__":
@@ -559,7 +591,7 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--gamename', type=str, help='hfo_game etc.',default="hfo_game")
 
-  parser.add_argument('--port', type=int, default=6000)
+  parser.add_argument('--port_start', type=int, default=8000)
   parser.add_argument('--numAgents', type=int, default=1)
   parser.add_argument('--numTMates', type=int, default=2)
 
@@ -575,6 +607,7 @@ if __name__ == "__main__":
   parser.add_argument('-o', '--optimizer', type=str, help='ses, pepg, openes, ga, cma.', default='cma')
   parser.add_argument('-e', '--num_episode', type=int, default=300, help='num episodes per trial')
   parser.add_argument('--eval_steps', type=int, default=25, help='evaluate every eval_steps step')
+  parser.add_argument('--total_steps', type=int, default=100, help='max steps')
   parser.add_argument('-n', '--num_worker', type=int, default=8)
   parser.add_argument('-t', '--num_worker_trial', type=int, help='trials per worker', default=4)
   parser.add_argument('--antithetic', type=int, default=1, help='set to 0 to disable antithetic sampling')
@@ -583,8 +616,12 @@ if __name__ == "__main__":
   
   args=parser.parse_args()
 
-
+# global hfo
+  # print(args)
+  # exit()
+  global file1
+  file1=open("reward_logs.txt","w")
 
   # args = parser.parse_args()
-  if "parent" == mpi_fork(args.num_worker+1): os.exit()
+  if "parent" == mpi_fork(args.num_worker+1): sys.exit()
   main(args)

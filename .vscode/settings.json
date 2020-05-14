@@ -58,5 +58,5 @@
         "cinttypes": "cpp",
         "typeindex": "cpp"
     },
-    "python.pythonPath": "/usr/bin/python3"
+    "python.pythonPath": "/home/kalyan/miniconda3/envs/HFO/bin/python"
 }
