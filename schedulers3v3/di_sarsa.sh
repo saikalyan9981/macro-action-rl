@@ -1,7 +1,7 @@
 #!/bin/bash
 
 stdbuf -oL ./HFO/bin/HFO --offense-npcs 3 --defense-npcs 1 --defense-agents 2 \
---port 7160 --no-logging --headless --deterministic --trials 52000 --seed 1 > logs/di_sarsa.log 2>&1 &
+--port 7160 --no-logging --no-sync --deterministic --trials 52000 --seed 1 > logs/di_sarsa.log 2>&1 &
 
 PID=$!
 cd di_sarsa

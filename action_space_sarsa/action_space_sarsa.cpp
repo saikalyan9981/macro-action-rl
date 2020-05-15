@@ -168,7 +168,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
         if ((episode + 1) % 100 == 0) {
             eps*=0.99;
             // learnR*=0.99;
-            sa->update_eps(eps);
+            // sa->update_eps(eps);
             // sa->update_learningRate(learnR);
         }
 
