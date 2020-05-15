@@ -1,6 +1,6 @@
 # check float point errors, workers
 import sys
-sys.path.insert(1,'/home/kalyan/SEMESTER_8/RL/macro-action-rl/HFO')
+sys.path.insert(1,'../HFO')
 from es import *
 from config import *
 import argparse
