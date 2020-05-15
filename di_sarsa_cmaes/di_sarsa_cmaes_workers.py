@@ -98,7 +98,7 @@ def toAction(action):
 #     total_reward += reward
 #   return total_reward
 def simulate_hfo(model,num_episode=10):
-  sprint("in simulate_hfo")
+  # sprint("in simulate_hfo")
 
   reward_list=[]
   t_list=[]
@@ -331,7 +331,7 @@ def decode_result_packet(packet):
   return result
 
 def worker(weights, seed, train_mode_int=1, max_len=-1):
-  sprint("in worker")
+  # sprint("in worker")
   train_mode = (train_mode_int == 1)
   model.set_model_params(weights)
   reward_list, t_list = simulate_hfo(model,num_episode=num_episode)
@@ -344,7 +344,7 @@ def worker(weights, seed, train_mode_int=1, max_len=-1):
 
 def slave():
   # port
-  sprint("in slave")
+  # sprint("in slave")
 
   port=current_port.next_seed()+10*rank
   make_hfo_env(port)

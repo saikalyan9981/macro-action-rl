@@ -1,14 +1,15 @@
 #!/bin/bash
 port=8000
 nworkers=8
-episodes=300
+episodes=100
 eval_steps=25
 total_steps=100
+
 for ((p=port+10;p<=port+10*nworkers;p+=10));
 do
     echo $p
     stdbuf -oL ./HFO/bin/HFO --offense-npcs 3 --defense-npcs 2 --defense-agents 1 \
-    --port $p --no-logging --headless --deterministic --trials 52000 --seed 1 > logs/di_sarsa_cmaes_workers_${p}.log 2>&1 &
+    --port $p --no-logging --headless --deterministic --trials 120000000 --seed 1 > logs/di_sarsa_cmaes_workers_${p}.log 2>&1 &
 done
 
 PID=$!
