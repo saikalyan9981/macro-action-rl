@@ -51,7 +51,7 @@ def getReward(s):
     reward=0
   #--------------------------- 
   else:
-    print("Error: Unknown GameState", s)
+    sprint("Error: Unknown GameState", s)
   return reward
 
 
@@ -130,24 +130,32 @@ def simulate_hfo(model,num_episode=10):
 
       state = purge_features(state_vec)
       action = model.get_action(state)
+      # print(action)
       a = toAction(action)
       if (a == MARK_PLAYER):
         unum = state_vec[(len(state_vec) - 1 - (action - 5) * 3)]
         hfoe.act(a, unum)
       else:
         hfoe.act(a)
-        count_steps+=1
         # std::string s = std::to_string(action);
         # for (int state_vec_fc = 0; state_vec_fc < state_vec.size(); state_vec_fc++) {
         #     s += std::to_string(state_vec[state_vec_fc]) + ",";
         # }
         # s += "UNUM" + std::to_string(unum) + "\n";;
-        status = hfoe.step()
+      count_steps+=1
+      status = hfoe.step()
+
+    # if (status==SERVER_DOWN):
+    #   hfoe.act(QUIT)
+    #   sprint("server down reconnecting to server")
+    #   hfoe.connectToServer(HIGH_LEVEL_FEATURE_SET, "../HFO/bin/teams/base/config/formations-dt", port, "localhost", "base_right", False, "")
 
     # End of episode
     if(action != -1):
       reward = getReward(status)
       reward_episode+=reward
+    
+      
     
     reward_list.append(reward_episode)
     t_list.append(t)
@@ -198,7 +206,7 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
     input_size=Num_Features,
     output_size=Num_Actions,
     time_factor=0,
-    layers=[10, 10],
+    layers=[10, 0],
     activation='softmax',
     noise_bias=0.0,
     output_noise=[False, False, False],
@@ -207,8 +215,8 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
   game=hfo_game
   model = make_model(game)
   num_params = model.param_count
-  print("size of model", num_params)
-  print("optimizer",optimizer)
+  sprint("size of model", num_params)
+  sprint("optimizer",optimizer)
   
   if optimizer == 'ses':
     ses = PEPG(num_params,
@@ -345,13 +353,14 @@ def worker(weights, seed, train_mode_int=1, max_len=-1):
 def slave():
   # port
   # sprint("in slave")
+  global port
 
   port=current_port.next_seed()+10*rank
   make_hfo_env(port)
   # model.make_env()
   packet = np.empty(SOLUTION_PACKET_SIZE, dtype=np.int32)
   t=0
-  while 1:
+  while t<total_steps:
     t+=1
     comm.Recv(packet, source=0)
     assert(len(packet) == SOLUTION_PACKET_SIZE)
@@ -372,6 +381,7 @@ def slave():
     result_packet = encode_result_packet(results)
     assert len(result_packet) == RESULT_PACKET_SIZE
     comm.Send(result_packet, dest=0)
+  
 
 def send_packets_to_slaves(packet_list):
   num_worker = comm.Get_size()
@@ -526,7 +536,8 @@ def master():
       with open(filename_best, 'wt') as out:
         res = json.dump([best_model_params_eval, best_reward_eval], out, sort_keys=True, indent=0, separators=(',', ': '))
       sprint("improvement", t, improvement, "curr", reward_eval, "prev", prev_best_reward_eval, "best", best_reward_eval)
-
+  # sys.exit()
+  # MPI_Abort()
 
 def main(args):
 

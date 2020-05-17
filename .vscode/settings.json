@@ -56,7 +56,12 @@
         "numeric": "cpp",
         "cfenv": "cpp",
         "cinttypes": "cpp",
-        "typeindex": "cpp"
+        "typeindex": "cpp",
+        "iterator": "cpp",
+        "map": "cpp",
+        "memory_resource": "cpp",
+        "set": "cpp",
+        "string": "cpp"
     },
     "python.pythonPath": "/home/kalyan/miniconda3/envs/HFO/bin/python"
 }

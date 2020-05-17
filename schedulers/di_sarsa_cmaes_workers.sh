@@ -1,9 +1,10 @@
 #!/bin/bash
 port=8000
 nworkers=8
-episodes=100
+episodes=200
 eval_steps=25
-total_steps=100
+total_steps=1000
+num_worker_trial=4
 
 for ((p=port+10;p<=port+10*nworkers;p+=10));
 do
@@ -16,7 +17,7 @@ PID=$!
 cd di_sarsa_cmaes
 sleep 5
 echo $PID
-python3 di_sarsa_cmaes_workers.py -n ${nworkers} --port_start ${port} -e ${episodes} --eval_steps ${eval_steps} --total_steps ${total_steps}
+python3 di_sarsa_cmaes_workers.py -n ${nworkers} --port_start ${port} -e ${episodes} --eval_steps ${eval_steps} --total_steps ${total_steps} --num_worker_trial ${num_worker_trial} > ../logs/di_sarsa_cmaes_workers_debug.log 2> ../logs/di_sarsa_cmaes_workers_debug_errors.log
 # kill $PID
 # killall -9 rcssserver
 kill $PID

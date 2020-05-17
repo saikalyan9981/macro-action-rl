@@ -29,8 +29,8 @@ def getReward(s):
     reward=0
   #--------------------------- 
   elif s==SERVER_DOWN:  
-    reward=0
-  #--------------------------- 
+    print("SERVER_DOWN", s,"with action",action,file=file1,flush=True)
+  #---------------------------  
   else:
     print("Error: Unknown GameState", s)
   return reward
@@ -79,6 +79,7 @@ def toAction(action):
 #     total_reward += reward
 #   return total_reward
 def simulate(model,step):
+  global action,hfo
   reward_list=[]
   action=-1
   count_steps=0
@@ -86,6 +87,8 @@ def simulate(model,step):
   reward_episode = 0
   status=IN_GAME
   a=0
+  t=0
+  critical=0
   while(status==IN_GAME):
     state_vec = hfo.getState()
     if (count_steps != step and action >= 0 and (a !=  MARK_PLAYER or  unum > 0)):
@@ -111,13 +114,30 @@ def simulate(model,step):
       hfo.act(a, unum)
     else:
       hfo.act(a)
-      count_steps+=1
       # std::string s = std::to_string(action);
       # for (int state_vec_fc = 0; state_vec_fc < state_vec.size(); state_vec_fc++) {
       #     s += std::to_string(state_vec[state_vec_fc]) + ",";
       # }
       # s += "UNUM" + std::to_string(unum) + "\n";;
-      status = hfo.step()
+    count_steps+=1
+    status = hfo.step()
+    if(status==SERVER_DOWN):
+      print("stage 2 Critical error in step 1 with status: , actions:  ",status,action,"state vec: ",state_vec,"trail num: ",trail_num,file=file1, flush=True)
+    #   sys.exit()
+    t+=1
+
+  # if (status==SERVER_DOWN):
+  #   hfo.act(QUIT)
+  #   status=hfo.step()
+  #   print("server down reconnecting to server",file=file1,flush=True)
+  #   print("server down reconnecting to server")
+
+  #   # del hfo
+  #   # hfo1 = HFOEnvironment()
+  #   hfo.connectToServer(HIGH_LEVEL_FEATURE_SET, "../HFO/bin/teams/base/config/formations-dt", port, "localhost", "base_right", False, "")
+    # # hfo=hfo1
+    # print("hfo1",file=file1,flush=True)
+    # sys.exit()
 
   # End of episode
   if(action != -1):
@@ -128,15 +148,18 @@ def simulate(model,step):
   return reward_list
 
 def rollout(model,step,trails):
+  global trail_num
   # model.env.seed(0)
   total_reward =0
   num_episodes=0
+  
   for i in range(trails):
+    trail_num=i
     reward = simulate(model,step)
     total_reward+=reward[0]
     # num_episodes += reward[1]
 
-  print("episodes",trails,"total_reward",total_reward,file=file1,flush=True)
+  # print("episodes",trails,"total_reward",total_reward,file=file1,flush=True)
   return total_reward/trails
     
 
@@ -151,7 +174,7 @@ if __name__ == '__main__':
   parser.add_argument('--numTMates', type=int, default=2)
 
   parser.add_argument('--numOpponents', type=int, default=3)
-  parser.add_argument('--numTrails',type=int,default=300)
+  parser.add_argument('--numTrails',type=int,default=10)
   # parser.add_argument('--numEpisodesTrain', type=int, default=500)
   # parser.add_argument('--numEpisodesTest', type=int, default=2000)
   parser.add_argument('--step', type=int, default=32)
@@ -182,18 +205,19 @@ if __name__ == '__main__':
   model=make_model(hfo_game)
   num_params = model.param_count
   print("size of model", num_params,file=file1,flush=True)
-  global hfo
+  global hfo,port
   hfo = HFOEnvironment()
+  port=args.port
   hfo.connectToServer(HIGH_LEVEL_FEATURE_SET, "../HFO/bin/teams/base/config/formations-dt", args.port, "localhost", "base_right", False, "")
   cma = CMAES(num_params,sigma_init=args.sigma_init,popsize=args.population)
   es = cma
   j=0
-  while j<100:
+  while j<100000:
     j+=1
     solutions = es.ask()
     fitlist=np.zeros(es.popsize)
     for i in range(es.popsize):
-      print("j: ",j,"i: ",i, "started",file=file1,flush=True)
+      # print("j: ",j,"i: ",i, "started",file=file1,flush=True)
 
       model.set_model_params(solutions[i])
       fitlist[i]=rollout(model,args.step,args.numTrails)

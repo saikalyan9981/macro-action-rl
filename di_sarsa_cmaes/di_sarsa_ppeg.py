@@ -591,7 +591,7 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--gamename', type=str, help='hfo_game etc.',default="hfo_game")
 
-  parser.add_argument('--port_start', type=int, default=8000)
+  parser.add_argument('--port_start', type=int, default=9000)
   parser.add_argument('--numAgents', type=int, default=1)
   parser.add_argument('--numTMates', type=int, default=2)
 
@@ -604,7 +604,7 @@ if __name__ == "__main__":
   parser.add_argument('--sigma_init', type=float, default=0.10, help='sigma_init')
   parser.add_argument('--sigma_decay', type=float, default=0.999, help='sigma_decay')
   parser.add_argument('--threshold', type=float, default=0.7,help='threshold')
-  parser.add_argument('-o', '--optimizer', type=str, help='ses, pepg, openes, ga, cma.', default='cma')
+  parser.add_argument('-o', '--optimizer', type=str, help='ses, pepg, openes, ga, cma.', default='pepg')
   parser.add_argument('-e', '--num_episode', type=int, default=300, help='num episodes per trial')
   parser.add_argument('--eval_steps', type=int, default=25, help='evaluate every eval_steps step')
   parser.add_argument('--total_steps', type=int, default=100, help='max steps')
