@@ -1,6 +1,6 @@
 #!/bin/bash
 stdbuf -oL ./HFO/bin/HFO --offense-npcs 3 --defense-npcs 2 --defense-agents 1 \
---port 8060 --deterministic --trials 5200000 --seed 1 > logs/di_sarsa_cmaes.log 2>&1 &
+--port 8060 --deterministic --headless --hfo-logging --trials 5200000 --seed 1 > logs/di_sarsa_cmaes.log 2>&1 &
 
 
 PID=$!
