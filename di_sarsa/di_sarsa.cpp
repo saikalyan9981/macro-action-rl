@@ -52,11 +52,16 @@ inline double getReward(hfo::status_t status) {
 }
 
 // Fill state with only the required features from state_vec
-// The length of the state vector is 10+6*T+3*O {T is the number of opponents and O is the number of opponents}
+// The length of the state vector is 10+6*T+3*O+2 {T is the number of opponents and O is the number of opponents}
 void selectFeatures(int* indices, int numTMates, int numOpponents, bool oppPres) {
 
     int stateIndex = 0;
 
+    // Features[0 - 9] - {5,8}=8
+    // Features[9+T+1 - 9+2T]: teammates dists to closest opps=T
+    // Features [9+3T+1 - 9+6T]: x, y, unum of teammates ignoring %3 -> unum of team mates=2T
+    // Features  [9+6T+1 - 9+6T+3*O]: x, y, unum of opponents ignoring %3 -> unum of opponents=20
+    // Ignored: Feature [ 9+6T+3O+1, 9+6T+3O+2]: last_action_status,stamina->2 
     // If no opponents ignore features Distance to Opponent
     // and Distance from Teammate i to Opponent are absent
     int tmpIndex = oppPres ? (9 + 3 * numTMates) : (9 + 2 * numTMates);
