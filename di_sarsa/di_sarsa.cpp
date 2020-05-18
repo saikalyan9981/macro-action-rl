@@ -12,7 +12,7 @@
 // Before running this program, first Start HFO server:
 // $./bin/HFO --offense-agents numAgents
 
-std::fstream trace;
+
 
 
 void printUsage() {
@@ -104,7 +104,10 @@ inline hfo::action_t toAction(int action, const std::vector<float>& state_vec) {
 
 void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int numEpiTest, double learnR, double lambda,
                   int suffix, bool oppPres, double eps, int step, bool load, std::string weightid,std:: string loadFile) {
-    trace.open("trace.txt", std::fstream::out);
+    std::fstream trace;
+    std::string filename = "Trace" + std::to_string(suffix) ; 
+
+    trace.open(filename, std::fstream::out);
     std::cout<<"lambda: "<<lambda<<"\n";
 
     // Number of features
@@ -183,13 +186,9 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             if (count_steps != step && action >= 0 && (a != hfo :: MARK_PLAYER ||  unum > 0)) {
                 count_steps ++;
                 if (a == hfo::MARK_PLAYER) {
-                    time_t now = time(0);
-                    // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
                     hfo.act(a, unum);
                     //std::cout << "MARKING" << unum <<"\n";
                 } else {
-                    time_t now = time(0);
-                    // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
                     hfo.act(a);
                 }
                 status = hfo.step();
@@ -218,13 +217,11 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             // Get hfo::Action
             a = toAction(action, state_vec);
             if (a == hfo::MARK_PLAYER) {
-                unum = state_vec[(state_vec.size() - 1 - (action - 5) * 3)];
-                time_t now = time(0);
-                // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
+                unum = state_vec[(state_vec.size() - (action - 5) * 3) ];
+                trace<<hfo::ActionToString(a)<< " " << unum << std::endl;
                 hfo.act(a, unum);
             } else {
-                time_t now = time(0);
-                // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
+				trace<<hfo::ActionToString(a)<<std::endl;
                 hfo.act(a);
 
             }
@@ -236,7 +233,11 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             s += "UNUM" + std::to_string(unum) + "\n";;
             status = hfo.step();
 
+            trace << s << std::endl ; 
+
         }
+
+
         // std :: cout <<":::::::::::::" << num_steps_per_epi<< " "<<step << " "<<"\n";
         // End of episode
         if(action != -1) {
