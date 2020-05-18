@@ -217,7 +217,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             // Get hfo::Action
             a = toAction(action, state_vec);
             if (a == hfo::MARK_PLAYER) {
-                unum = state_vec[(state_vec.size() - (action - 5) * 3) ];
+                unum = state_vec[state_vec.size() -1 -2 - (action - 5) * 3];
                 trace<<hfo::ActionToString(a)<< " " << unum << std::endl;
                 hfo.act(a, unum);
             } else {
@@ -226,11 +226,17 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
 
             }
             count_steps++;
-            std::string s = std::to_string(action);
+            std::string s = std::to_string(action)+" <- action";
+            s+= "\nSTATE Vector of Size "+std::to_string(state_vec.size())+" ";
             for (int state_vec_fc = 0; state_vec_fc < state_vec.size(); state_vec_fc++) {
                 s += std::to_string(state_vec[state_vec_fc]) + ",";
             }
-            s += "UNUM" + std::to_string(unum) + "\n";;
+            s += "\nSTATE of Size "+std::to_string(numF)+" ";
+            for (int i = 0; i < numF; i++) {
+                s += std::to_string(state[i]) + ",";
+                // state[i] = state_vec[indices[i]];
+            }
+            s += "\nUNUM" + std::to_string(unum) + "\n";;
             status = hfo.step();
 
             trace << s << std::endl ; 
