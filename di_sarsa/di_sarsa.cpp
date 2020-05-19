@@ -12,7 +12,7 @@
 // Before running this program, first Start HFO server:
 // $./bin/HFO --offense-agents numAgents
 
-std::fstream trace;
+
 
 
 void printUsage() {
@@ -52,11 +52,16 @@ inline double getReward(hfo::status_t status) {
 }
 
 // Fill state with only the required features from state_vec
-// The length of the state vector is 10+6*T+3*O {T is the number of opponents and O is the number of opponents}
+// The length of the state vector is 10+6*T+3*O+2 {T is the number of opponents and O is the number of opponents}
 void selectFeatures(int* indices, int numTMates, int numOpponents, bool oppPres) {
 
     int stateIndex = 0;
 
+    // Features[0 - 9] - {5,8}=8
+    // Features[9+T+1 - 9+2T]: teammates dists to closest opps=T
+    // Features [9+3T+1 - 9+6T]: x, y, unum of teammates ignoring %3 -> unum of team mates=2T
+    // Features  [9+6T+1 - 9+6T+3*O]: x, y, unum of opponents ignoring %3 -> unum of opponents=20
+    // Ignored: Feature [ 9+6T+3O+1, 9+6T+3O+2]: last_action_status,stamina->2 
     // If no opponents ignore features Distance to Opponent
     // and Distance from Teammate i to Opponent are absent
     int tmpIndex = oppPres ? (9 + 3 * numTMates) : (9 + 2 * numTMates);
@@ -104,7 +109,10 @@ inline hfo::action_t toAction(int action, const std::vector<float>& state_vec) {
 
 void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int numEpiTest, double learnR, double lambda,
                   int suffix, bool oppPres, double eps, int step, bool load, std::string weightid,std:: string loadFile) {
-    trace.open("trace.txt", std::fstream::out);
+    std::fstream trace;
+    std::string filename = "Trace" + std::to_string(suffix) ; 
+
+    trace.open(filename, std::fstream::out);
     std::cout<<"lambda: "<<lambda<<"\n";
 
     // Number of features
@@ -154,7 +162,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
         if ((episode + 1) % 100 == 0) {
             eps*=0.99;
             // learnR*=0.99;
-            sa->update_eps(eps);
+            // sa->update_eps(eps);
             // sa->update_learningRate(learnR);
 
         }
@@ -183,13 +191,9 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             if (count_steps != step && action >= 0 && (a != hfo :: MARK_PLAYER ||  unum > 0)) {
                 count_steps ++;
                 if (a == hfo::MARK_PLAYER) {
-                    time_t now = time(0);
-                    // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
                     hfo.act(a, unum);
                     //std::cout << "MARKING" << unum <<"\n";
                 } else {
-                    time_t now = time(0);
-                    // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
                     hfo.act(a);
                 }
                 status = hfo.step();
@@ -218,25 +222,33 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             // Get hfo::Action
             a = toAction(action, state_vec);
             if (a == hfo::MARK_PLAYER) {
-                unum = state_vec[(state_vec.size() - 1 - (action - 5) * 3)];
-                time_t now = time(0);
-                // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
+                unum = state_vec[state_vec.size() -1 -2 - (action - 5) * 3];
+                trace<<hfo::ActionToString(a)<< " " << unum << std::endl;
                 hfo.act(a, unum);
             } else {
-                time_t now = time(0);
-                // trace<<ctime(&now)<<" "<<hfo::ActionToString(a)<<std::endl;
+				trace<<hfo::ActionToString(a)<<std::endl;
                 hfo.act(a);
 
             }
             count_steps++;
-            std::string s = std::to_string(action);
+            std::string s = std::to_string(action)+" <- action";
+            s+= "\nSTATE Vector of Size "+std::to_string(state_vec.size())+" ";
             for (int state_vec_fc = 0; state_vec_fc < state_vec.size(); state_vec_fc++) {
                 s += std::to_string(state_vec[state_vec_fc]) + ",";
             }
-            s += "UNUM" + std::to_string(unum) + "\n";;
+            s += "\nSTATE of Size "+std::to_string(numF)+" ";
+            for (int i = 0; i < numF; i++) {
+                s += std::to_string(state[i]) + ",";
+                // state[i] = state_vec[indices[i]];
+            }
+            s += "\nUNUM" + std::to_string(unum) + "\n";;
             status = hfo.step();
 
+            trace << s << std::endl ; 
+
         }
+
+
         // std :: cout <<":::::::::::::" << num_steps_per_epi<< " "<<step << " "<<"\n";
         // End of episode
         if(action != -1) {
@@ -328,7 +340,7 @@ int main(int argc, char **argv) {
             return 0;
         }
     }
-    int numTeammates = numOpponents - 1;//? wutt
+    int numTeammates = numOpponents - 1;
     std::thread agentThreads[numAgents];
     for (int agent = 0; agent < numAgents; agent++) {
     	std::cout << loadFile[0] << "loading agent\n"; 

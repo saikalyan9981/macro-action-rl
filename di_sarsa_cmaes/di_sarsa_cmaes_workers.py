@@ -58,16 +58,19 @@ def getReward(s):
 def purge_features(state): #check
   st=np.empty(Num_Features,dtype=np.float64)
   stateIndex=0
-  tmpIndex= 9 + 3*Num_Teammates
-  for i in range(len(state)):
-    # Ignore first six features and teammate proximity to opponent(when opponent is absent)and opponent features
-    if(i < 6 or i>9+6*Num_Teammates or (Num_Opponents==0 and ((i>9+Num_Teammates and i<=9+2*Num_Teammates) or i==9)) ): 
+  tmpIndex= 9 + 3*Num_Teammates if [Num_Opponents>0] else 9 + 2 * Num_Teammates
+  numF = 10 + 6 * Num_Teammates + 3 * Num_Opponents
+  for i in range(numF):
+    # #  Ignore first six featues
+    if(i == 5 or i == 8):
       continue
-    #Ignore Angle and Uniform Number of Teammates
-    temp =  i-tmpIndex
-    if(temp > 0 and (temp % 3 == 2 or temp % 3 == 0)):
-       continue
-    if (i > 9+6*Num_Teammates): 
+    elif(i > 9 and i <= 9 + Num_Teammates):
+      continue # Ignore Goal Opening angles, as invalid
+    elif(i <= 9 + 3 * Num_Teammates and i > 9 + 2 * Num_Teammates):
+      continue #Ignore Pass Opening angles, as invalid
+    # Ignore Uniform Number of Teammates and opponents
+    temp =  i - tmpIndex
+    if(temp > 0 and (temp % 3 == 0) ):
       continue
     st[stateIndex] = state[i]
     stateIndex+=1
@@ -133,7 +136,7 @@ def simulate_hfo(model,num_episode=10):
       # print(action)
       a = toAction(action)
       if (a == MARK_PLAYER):
-        unum = state_vec[(len(state_vec) - 1 - (action - 5) * 3)]
+        unum = state_vec[(len(state_vec) - 1 -2 - (action - 5) * 3)]
         hfoe.act(a, unum)
       else:
         hfoe.act(a)
@@ -206,7 +209,7 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
     input_size=Num_Features,
     output_size=Num_Actions,
     time_factor=0,
-    layers=[10, 0],
+    layers=[32, 0],
     activation='softmax',
     noise_bias=0.0,
     output_noise=[False, False, False],
