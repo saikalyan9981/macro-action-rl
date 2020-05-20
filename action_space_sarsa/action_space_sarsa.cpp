@@ -308,7 +308,7 @@ int main(int argc, char **argv) {
     int numEpisodes = 10;
     int numEpisodesTest = 10;
     int basePort = 6000;
-    double learnR = 0.1;
+    double learnR = 0.01;
     int suffix = 0;
     bool opponentPresent = true;
     int numOpponents = 0;

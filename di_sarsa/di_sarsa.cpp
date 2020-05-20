@@ -90,10 +90,10 @@ inline hfo::action_t toAction(int action, const std::vector<float>& state_vec) {
         a = hfo::GO_TO_BALL;
         break;
     case 3:
-        a = hfo::NOOP;
+        a = hfo::DEFEND_GOAL;
         break;
     case 4:
-        a = hfo::DEFEND_GOAL;
+        a = hfo::NOOP;
         break;
     default :
         a = hfo::MARK_PLAYER;
@@ -206,10 +206,14 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
                 }
             }
 
+            // std::string r = "" ; 
             // Fill up state array
             for (int i = 0; i < numF; i++) {
                 state[i] = state_vec[indices[i]];
+                // r += std::to_string(i) + " for " + std::to_string(state[i]) + "," ; 
             }
+
+            // trace << "State vec " << r << std::endl ; 
 
             // Get raw action
             action = sa->selectAction(state);
@@ -217,13 +221,12 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             // Get hfo::Action
             a = toAction(action, state_vec);
             if (a == hfo::MARK_PLAYER) {
-                unum = state_vec[(state_vec.size() - (action - 5) * 3) ];
+                unum = state_vec[(state_vec.size() - 3 -  (action - 5) * 3) ];
                 trace<<hfo::ActionToString(a)<< " " << unum << std::endl;
                 hfo.act(a, unum);
             } else {
 				trace<<hfo::ActionToString(a)<<std::endl;
                 hfo.act(a);
-
             }
             count_steps++;
             std::string s = std::to_string(action);
@@ -257,7 +260,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             reward_queue.pop();
         }
         
-        trace<<"episode: "<<episode<<" , "<<"total_reward_episode: "<<total_reward_episode<<" , "<<"reward: "<<reward_sum_2000/reward_queue.size()<<std::endl;
+        // trace<<"episode: "<<episode<<" , "<<"total_reward_episode: "<<total_reward_episode<<" , "<<"reward: "<<reward_sum_2000/reward_queue.size()<<std::endl;
     }
 
     delete sa;
