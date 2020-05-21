@@ -7,7 +7,7 @@ log/
 *.log
 */trace.txt
 */di_sarsa
-
+*.pyc
 
 # Byte-compiled / optimized / DLL files
 HFO/__pycache__/
