@@ -37,7 +37,9 @@ def animate(i):
             xplot.append(1 - (v - xar[i - 2000])/2000)
 
     ax1.clear()
-    ax1.plot(yar,xplot)
+    if len(yar) > 600 and len(xplot) > 600:
+        ax1.plot(yar[600:],xplot[600:])
+    # ax1.plot(yar,xplot)    
     ax1.set_title(algo)
     ax1.set_xlabel("episodes")
     # print(xplot[-1])

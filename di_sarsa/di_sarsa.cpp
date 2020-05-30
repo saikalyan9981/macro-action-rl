@@ -92,9 +92,9 @@ inline hfo::action_t toAction(int action, const std::vector<float>& state_vec) {
     case 3:
         a = hfo::DEFEND_GOAL;
         break;
-    case 4:
-        a = hfo::NOOP;
-        break;
+    // case 4:
+    //     a = hfo::NOOP;
+    //     break;
     default :
         a = hfo::MARK_PLAYER;
         break;
@@ -113,7 +113,8 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
     // Number of features
     int numF = oppPres ? (8 + 3 * numTMates + 2 * numOpponents) : (3 + 3 * numTMates);
     // Number of actions
-    int numA = 5 + numOpponents; //DEF_GOAL+MOVE+GTB+NOOP+RATG+MP(unum)
+    // int numA = 5 + numOpponents; //DEF_GOAL+MOVE+GTB+NOOP+RATG+MP(unum)
+    int numA = 4 + numOpponents; //DEF_GOAL+MOVE+GTB+NOOP+RATG+MP(unum)
 
     // Other SARSA parameters
     // Changed Remember testing keep it 0
@@ -171,7 +172,6 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             wtFile = &s[0u];
             sa -> saveWeights(wtFile);
         }
-        int count = 0;
         status = hfo::IN_GAME;
         action = -1;
         int count_steps = 0;
@@ -221,7 +221,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             // Get hfo::Action
             a = toAction(action, state_vec);
             if (a == hfo::MARK_PLAYER) {
-                unum = state_vec[(state_vec.size() - 3 -  (action - 5) * 3) ];
+                unum = state_vec[(state_vec.size() - 3 -  (action - 4) * 3) ];
                 trace<<hfo::ActionToString(a)<< " " << unum << std::endl;
                 hfo.act(a, unum);
             } else {
@@ -236,7 +236,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             s += "UNUM" + std::to_string(unum) + "\n";;
             status = hfo.step();
 
-            trace << s << std::endl ; 
+            // trace << s << std::endl ; 
 
         }
 
@@ -335,7 +335,7 @@ int main(int argc, char **argv) {
     int numTeammates = numOpponents - 1;
     std::thread agentThreads[numAgents];
     for (int agent = 0; agent < numAgents; agent++) {
-    	std::cout << loadFile[0] << "loading agent\n"; 
+
         agentThreads[agent] = std::thread(offenseAgent, basePort,
                                           numTeammates, numOpponents, numEpisodes, numEpisodesTest, learnR, lambda,
                                           agent, opponentPresent, eps, step, load, weightid,loadFile[agent]);
