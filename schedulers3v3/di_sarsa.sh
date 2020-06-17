@@ -16,6 +16,3 @@ sleep 5
 kill -SIGINT $PID
 sleep 5
 cd ..
-
-
-# stdbuf -oL ./HFO/bin/HFO --offense-npcs 3 --defense-npcs 3 --port 7160 --no-logging --no-sync --deterministic --trials 20 --seed 1
