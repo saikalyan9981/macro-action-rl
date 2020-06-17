@@ -80,16 +80,16 @@ void selectFeatures(int* indices, int numTMates, int numOpponents, bool oppPres)
 inline hfo::action_t toAction(int action, const std::vector<float>& state_vec) {
     hfo::action_t a;
     switch (action) {
+    // case 0:
+    //     a = hfo::MOVE;
+    //     break;
     case 0:
-        a = hfo::MOVE;
-        break;
-    case 1:
         a = hfo::REDUCE_ANGLE_TO_GOAL;
         break;
-    case 2:
+    case 1:
         a = hfo::GO_TO_BALL;
         break;
-    case 3:
+    case 2:
         a = hfo::DEFEND_GOAL;
         break;
     // case 4:
@@ -113,8 +113,8 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
     // Number of features
     int numF = oppPres ? (8 + 3 * numTMates + 2 * numOpponents) : (3 + 3 * numTMates);
     // Number of actions
-    // int numA = 5 + numOpponents; //DEF_GOAL+MOVE+GTB+NOOP+RATG+MP(unum)
-    int numA = 4 + numOpponents; //DEF_GOAL+MOVE+GTB+NOOP+RATG+MP(unum)
+    // int nnumAumA = 5 + numOpponents; //DEF_GOAL+MOVE+GTB+NOOP+RATG+MP(unum)
+    int numA = 3 + numOpponents; //DEF_GOAL+MOVE+GTB+NOOP+RATG+MP(unum)
 
     // Other SARSA parameters
     // Changed Remember testing keep it 0
@@ -221,19 +221,26 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             // Get hfo::Action
             a = toAction(action, state_vec);
             if (a == hfo::MARK_PLAYER) {
-                unum = state_vec[(state_vec.size() - 3 -  (action - 4) * 3) ];
+                unum = state_vec[(state_vec.size() - 3 -  (action - 3) * 3) ];
                 trace<<hfo::ActionToString(a)<< " " << unum << std::endl;
-                hfo.act(a, unum);
+                if(unum > 0)
+                {
+	                hfo.act(a, unum);
+                }
+                else
+                {
+                	hfo.act(hfo::MOVE, unum);
+                }
             } else {
 				trace<<hfo::ActionToString(a)<<std::endl;
                 hfo.act(a);
             }
             count_steps++;
-            std::string s = std::to_string(action);
-            for (int state_vec_fc = 0; state_vec_fc < state_vec.size(); state_vec_fc++) {
-                s += std::to_string(state_vec[state_vec_fc]) + ",";
-            }
-            s += "UNUM" + std::to_string(unum) + "\n";;
+            // std::string s = std::to_string(action);
+            // for (int state_vec_fc = 0; state_vec_fc < state_vec.size(); state_vec_fc++) {
+            //     s += std::to_string(state_vec[state_vec_fc]) + ",";
+            // }
+            // s += "UNUM" + std::to_string(unum) + "\n";;
             status = hfo.step();
 
             // trace << s << std::endl ; 
