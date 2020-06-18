@@ -19,7 +19,7 @@ do
     # stdbuf -oL ./HFO/bin/HFO --offense-npcs 3 --defense-npcs 2 --defense-agents 1 \
     # --port $Port --no-logging --headless --deterministic --trials 52000 --seed $Seed > logs/di_sarsa.log 2>&1 &
 
-    stdbuf -oL ./HFO/bin/HFO --offense-npcs 3 --defense-npcs 2 --defense-agents 1 \
+    stdbuf -oL ./HFO/bin/HFO --record --offense-npcs 3 --defense-npcs 2 --defense-agents 1 \
     --port $Port --no-logging --no-sync --deterministic --trials 52000 --seed $Seed > logs/di_sarsa.log 2>&1 &
 
     PID=$!

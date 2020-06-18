@@ -61,7 +61,9 @@
         "map": "cpp",
         "memory_resource": "cpp",
         "set": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "future": "cpp",
+        "regex": "cpp"
     },
     "python.pythonPath": "/home/kalyan/miniconda3/envs/HFO/bin/python"
 }

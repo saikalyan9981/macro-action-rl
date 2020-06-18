@@ -78,7 +78,7 @@ def purge_features(state): #check
 
 def toAction(action):
   if action==0:
-      a = MOVE
+      a = INTERCEPT
   elif action==1:
       a = REDUCE_ANGLE_TO_GOAL
   elif action==2:
@@ -138,8 +138,12 @@ def simulate_hfo(model,num_episode=10):
       if (a == MARK_PLAYER):
         unum = state_vec[(len(state_vec) - 1 -2 - (action - 5) * 3)]
         hfoe.act(a, unum)
+        # sprint("epsiode_no ",i,ACTION_STRINGS[a],unum,"ACTION: ",a)
+
       else:
         hfoe.act(a)
+        # sprint("epsiode_no ",i,ACTION_STRINGS[a],"ACTION: ",a)
+
         # std::string s = std::to_string(action);
         # for (int state_vec_fc = 0; state_vec_fc < state_vec.size(); state_vec_fc++) {
         #     s += std::to_string(state_vec[state_vec_fc]) + ",";
@@ -200,7 +204,7 @@ SOLUTION_PACKET_SIZE = (5+num_params)*num_worker_trial
 RESULT_PACKET_SIZE = 4*num_worker_trial
 ###
 
-def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
+def initialize_settings(sigma_init=0.1, sigma_decay=0.9999,pretrained=""):
   global population, filebase, game, model, num_params, es, PRECISION, SOLUTION_PACKET_SIZE, RESULT_PACKET_SIZE
 
   population = num_worker * num_worker_trial
@@ -217,10 +221,20 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
   )
   game=hfo_game
   model = make_model(game)
+  # if pretrained != "":
+  #   model.load_model(pretrained)
   num_params = model.param_count
   sprint("size of model", num_params)
   sprint("optimizer",optimizer)
   
+  
+  model_params=None
+  if pretrained !="":
+      with open(pretrained) as f:    
+        data = json.load(f)
+      sprint("loaded_model from",pretrained)
+      model_params = data[0]
+
   if optimizer == 'ses':
     ses = PEPG(num_params,
       sigma_init=sigma_init,
@@ -243,7 +257,8 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
   elif optimizer == 'cma':
     cma = CMAES(num_params,
       sigma_init=sigma_init,
-      popsize=population)
+      popsize=population,
+      x0=model_params)
     es = cma
   elif optimizer == 'pepg':
     pepg = PEPG(num_params,
@@ -269,7 +284,7 @@ def initialize_settings(sigma_init=0.1, sigma_decay=0.9999):
       weight_decay=0.005,
       popsize=population)
     es = oes
-
+  
   PRECISION = 10000
   SOLUTION_PACKET_SIZE = (5+num_params)*num_worker_trial
   RESULT_PACKET_SIZE = 4*num_worker_trial
@@ -355,7 +370,7 @@ def worker(weights, seed, train_mode_int=1, max_len=-1):
 
 def slave():
   # port
-  # sprint("in slave")
+  sprint("in slave")
   global port
 
   port=current_port.next_seed()+10*rank
@@ -367,6 +382,8 @@ def slave():
     t+=1
     comm.Recv(packet, source=0)
     assert(len(packet) == SOLUTION_PACKET_SIZE)
+    # sprint("in decode_solution_packet","Packets chekced")
+
     solutions = decode_solution_packet(packet)
     # sprint("in decode_solution_packet",solutions)
 
@@ -449,6 +466,7 @@ def master():
   filename_log = filebase+'.log.json'
   filename_hist = filebase+'.hist.json'
   filename_best = filebase+'.best.json'
+  filename_best_params = filebase + '.best_params.json'
 
   # model.make_env()
   # port=current_port.next_seed()+rank
@@ -467,8 +485,16 @@ def master():
   while t<total_steps:
     t += 1
 
-    solutions = es.ask()
-
+    if eval_mode:
+      with open(pretrained) as f:    
+        data = json.load(f)
+        model_params = data[0]
+      eval_reward = evaluate_batch(model_params, max_len=-1)
+      sprint("eval_reward",eval_reward)
+      return
+    else:
+      solutions = es.ask()
+    
     if antithetic:
       seeds = seeder.next_batch(int(es.popsize/2))
       seeds = seeds+seeds
@@ -486,7 +512,7 @@ def master():
     max_time_step = int(np.max(reward_list_total[:, 1])*100)/100. # get average time step
     avg_reward = int(np.mean(reward_list)*100)/100. # get average time step
     std_reward = int(np.std(reward_list)*100)/100. # get average time step
-
+    sprint("reward_list",reward_list)
     es.tell(reward_list)
 
     es_solution = es.result()
@@ -510,7 +536,7 @@ def master():
     history.append(h)
 
     with open(filename, 'wt') as out:
-      res = json.dump([np.array(es.current_param()).round(4).tolist()], out, sort_keys=True, indent=2, separators=(',', ': '))
+      res = json.dump([np.array(model_params).round(4).tolist(),reward], out, sort_keys=True, indent=2, separators=(',', ': '))
 
     with open(filename_hist, 'wt') as out:
       res = json.dump(history, out, sort_keys=False, indent=0, separators=(',', ':'))
@@ -539,13 +565,17 @@ def master():
       with open(filename_best, 'wt') as out:
         res = json.dump([best_model_params_eval, best_reward_eval], out, sort_keys=True, indent=0, separators=(',', ': '))
       sprint("improvement", t, improvement, "curr", reward_eval, "prev", prev_best_reward_eval, "best", best_reward_eval)
+      # with open(filename_best_params, 'wt') as out:
+      #   res = json.dump(np.array(es.best_param()).round(4), out, sort_keys=True, indent=0, separators=(',', ': '))
+      # sprint("improvement", t, improvement, "curr", reward_eval, "prev", prev_best_reward_eval, "best", best_reward_eval)
+      
   # sys.exit()
   # MPI_Abort()
 
 def main(args):
 
   global gamename, optimizer, num_episode, eval_steps, num_worker, num_worker_trial, antithetic, seed_start, retrain_mode, cap_time_mode,current_port
-  global Num_Features, Num_Actions, Num_Opponents,Num_Teammates,step_size,total_steps
+  global Num_Features, Num_Actions, Num_Opponents,Num_Teammates,step_size,total_steps,pretrained,eval_mode
   
   gamename = args.gamename
   optimizer = args.optimizer
@@ -560,14 +590,14 @@ def main(args):
   current_port=OldSeeder(args.port_start)
   step_size = args.step
   total_steps=args.total_steps
-
+  pretrained = args.pretrained
   Num_Opponents =  args.numOpponents
   Num_Teammates = args.numTMates
   Num_Features = 8+ 3*Num_Teammates + 2*Num_Opponents if [args.numOpponents > 0] else 3+3*Num_Teammates
   Num_Actions = 5+ Num_Opponents
-
-  initialize_settings(args.sigma_init, args.sigma_decay)
-
+  eval_mode = args.eval_mode
+  initialize_settings(args.sigma_init, args.sigma_decay,args.pretrained)
+  
   sprint("process", rank, "out of total ", comm.Get_size(), "started")
   if (rank == 0):
     master()
@@ -604,6 +634,7 @@ if __name__ == "__main__":
 
   parser = argparse.ArgumentParser()
   parser.add_argument('--gamename', type=str, help='hfo_game etc.',default="hfo_game")
+  parser.add_argument('--pretrained', type=str, help='hfo_game etc.',default="")
 
   parser.add_argument('--port_start', type=int, default=8000)
   parser.add_argument('--numAgents', type=int, default=1)
@@ -611,7 +642,7 @@ if __name__ == "__main__":
 
   parser.add_argument('--numOpponents', type=int, default=3)
   parser.add_argument('--numTrails',type=int,default=300)
-  # parser.add_argument('--numEpisodesTrain', type=int, default=500)
+  parser.add_argument('--eval_mode', type=bool, default=False)
   # parser.add_argument('--numEpisodesTest', type=int, default=2000)
   parser.add_argument('--step', type=int, default=32)
   parser.add_argument('-s', '--seed_start', type=int, default=111, help='initial seed')
@@ -627,6 +658,8 @@ if __name__ == "__main__":
   parser.add_argument('--antithetic', type=int, default=1, help='set to 0 to disable antithetic sampling')
   parser.add_argument('--cap_time', type=int, default=0, help='set to 0 to disable capping timesteps to 2x of average.')
   parser.add_argument('--retrain', type=int, default=0, help='set to 0 to disable retraining every eval_steps if results suck.\n only works w/ ses, openes, pepg.')
+  parser.add_argument('--log_file', type=str, default="reward_logs.txt", help='reward_logs')
+  
   
   args=parser.parse_args()
 
@@ -634,7 +667,7 @@ if __name__ == "__main__":
   # print(args)
   # exit()
   global file1
-  file1=open("reward_logs.txt","w")
+  file1=open(args.log_file,"w")
 
   # args = parser.parse_args()
   if "parent" == mpi_fork(args.num_worker+1): sys.exit()

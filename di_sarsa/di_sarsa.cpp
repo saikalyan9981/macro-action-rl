@@ -86,7 +86,7 @@ inline hfo::action_t toAction(int action, const std::vector<float>& state_vec) {
     hfo::action_t a;
     switch (action) {
     case 0:
-        a = hfo::MOVE;
+        a = hfo::INTERCEPT;
         break;
     case 1:
         a = hfo::REDUCE_ANGLE_TO_GOAL;
@@ -161,12 +161,11 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
     for (int episode = 0; episode < numEpi+numEpiTest; episode++) {
         if ((episode + 1) % 100 == 0) {
             eps*=0.99;
-            // learnR*=0.99;
-            // sa->update_eps(eps);
-            // sa->update_learningRate(learnR);
+            learnR*=0.99;
+            sa->update_eps(eps);
+            sa->update_lr(learnR);
 
         }
-        // sa->update_learningRate(1./(episode+1));
         total_reward_episode = 0;
         if ((episode + 1) % 5000 == 0) {
             // Weights file
@@ -221,6 +220,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
 
             // Get hfo::Action
             a = toAction(action, state_vec);
+            // a =  hfo::MOVE;
             if (a == hfo::MARK_PLAYER) {
                 unum = state_vec[state_vec.size() -1 -2 - (action - 5) * 3];
                 trace<<hfo::ActionToString(a)<< " " << unum << std::endl;
@@ -268,7 +268,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             reward_queue.pop();
         }
         
-        trace<<"episode: "<<episode<<" , "<<"total_reward_episode: "<<total_reward_episode<<" , "<<"reward: "<<reward_sum_2000/reward_queue.size()<<std::endl;
+        // trace<<"episode: "<<episode<<" , "<<"total_reward_episode: "<<total_reward_episode<<" , "<<"reward: "<<reward_sum_2000/reward_queue.size()<<std::endl;
     }
 
     delete sa;

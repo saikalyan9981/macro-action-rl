@@ -1,6 +1,0 @@
-Trials             : 2000
-Goals              : 1376
-Defense Captured   : 433
-Balls Out of Bounds: 186
-Out of Time        : 5
-[start.py] Cleaning up server and other processes
