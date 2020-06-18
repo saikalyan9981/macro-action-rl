@@ -24,5 +24,5 @@ e. 732 / 2000 , 0.634
 
 Avg: Defense team wins with probability 0.6213. 
 
-Ran once with --offense-team Helios
-It gave 745 / 2000 0.6275
+Ran once with --offense-team helios --defense-team helios
+It gave 438 / 2000 0.781
