@@ -82,11 +82,11 @@ void selectFeatures(int* indices, int numTMates, int numOpponents, bool oppPres)
 }
 
 // Convert int to hfo::Action
-inline hfo::action_t toAction(int action, const std::vector<float>& state_vec) {
+hfo::action_t toAction(int action, const std::vector<float>& state_vec) {
     hfo::action_t a;
     switch (action) {
     case 0:
-        a = hfo::MOVE;
+        a = hfo::INTERCEPT;
         break;
     case 1:
         a = hfo::REDUCE_ANGLE_TO_GOAL;
@@ -107,6 +107,7 @@ inline hfo::action_t toAction(int action, const std::vector<float>& state_vec) {
     return a;
 }
 
+
 void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int numEpiTest, double learnR, double lambda,
                   int suffix, bool oppPres, double eps, int step, bool load, std::string weightid,std:: string loadFile) {
     std::fstream trace;
@@ -118,7 +119,8 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
     // Number of features
     int numF = oppPres ? (8 + 3 * numTMates + 2 * numOpponents) : (3 + 3 * numTMates);
     // Number of actions
-    int numA = 5 + numOpponents; //DEF_GOAL+MOVE+GTB+NOOP+RATG+MP(unum)
+    // int nnumAumA = 5 + numOpponents; //DEF_GOAL+MOVE+GTB+NOOP+RATG+MP(unum)
+    int numA = 3 + numOpponents; //DEF_GOAL+MOVE+GTB+NOOP+RATG+MP(unum)
 
     // Other SARSA parameters
     // Changed Remember testing keep it 0
@@ -176,7 +178,6 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             wtFile = &s[0u];
             sa -> saveWeights(wtFile);
         }
-        int count = 0;
         status = hfo::IN_GAME;
         action = -1;
         int count_steps = 0;
@@ -211,10 +212,14 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
                 }
             }
 
+            // std::string r = "" ; 
             // Fill up state array
             for (int i = 0; i < numF; i++) {
                 state[i] = state_vec[indices[i]];
+                // r += std::to_string(i) + " for " + std::to_string(state[i]) + "," ; 
             }
+
+            // trace << "State vec " << r << std::endl ; 
 
             // Get raw action
             action = sa->selectAction(state);
@@ -224,11 +229,17 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             if (a == hfo::MARK_PLAYER) {
                 unum = state_vec[state_vec.size() -1 -2 - (action - 5) * 3];
                 trace<<hfo::ActionToString(a)<< " " << unum << std::endl;
-                hfo.act(a, unum);
+                if(unum > 0)
+                {
+	                hfo.act(a, unum);
+                }
+                else
+                {
+                	hfo.act(hfo::MOVE, unum);
+                }
             } else {
 				trace<<hfo::ActionToString(a)<<std::endl;
                 hfo.act(a);
-
             }
             count_steps++;
             std::string s = std::to_string(action)+" <- action";
@@ -244,7 +255,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             s += "\nUNUM" + std::to_string(unum) + "\n";;
             status = hfo.step();
 
-            trace << s << std::endl ; 
+            // trace << s << std::endl ; 
 
         }
 
@@ -268,7 +279,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
             reward_queue.pop();
         }
         
-        trace<<"episode: "<<episode<<" , "<<"total_reward_episode: "<<total_reward_episode<<" , "<<"reward: "<<reward_sum_2000/reward_queue.size()<<std::endl;
+        // trace<<"episode: "<<episode<<" , "<<"total_reward_episode: "<<total_reward_episode<<" , "<<"reward: "<<reward_sum_2000/reward_queue.size()<<std::endl;
     }
 
     delete sa;
@@ -343,7 +354,7 @@ int main(int argc, char **argv) {
     int numTeammates = numOpponents - 1;
     std::thread agentThreads[numAgents];
     for (int agent = 0; agent < numAgents; agent++) {
-    	std::cout << loadFile[0] << "loading agent\n"; 
+
         agentThreads[agent] = std::thread(offenseAgent, basePort,
                                           numTeammates, numOpponents, numEpisodes, numEpisodesTest, learnR, lambda,
                                           agent, opponentPresent, eps, step, load, weightid,loadFile[agent]);
