@@ -120,7 +120,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, int num
     int numF = oppPres ? (8 + 3 * numTMates + 2 * numOpponents) : (3 + 3 * numTMates);
     // Number of actions
     // int nnumAumA = 5 + numOpponents; //DEF_GOAL+MOVE+GTB+NOOP+RATG+MP(unum)
-    int numA = 3 + numOpponents; //DEF_GOAL+MOVE+GTB+NOOP+RATG+MP(unum)
+    int numA = 5 + numOpponents; //DEF_GOAL+MOVE+GTB+NOOP+RATG+MP(unum)
 
     // Other SARSA parameters
     // Changed Remember testing keep it 0
