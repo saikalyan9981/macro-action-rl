@@ -6,6 +6,7 @@ log/
 *.o
 *.log
 */trace.txt
+*/Trace*
 */di_sarsa
 *.pyc
 
