@@ -9,6 +9,9 @@ d. 1426 / 2000 , 0.287
 e. 1433 / 2000 , 0.2835
 
 Avg: Defense team wins with probability 0.2922
+R
+an once with --offense-team helios --defense-team helios
+It gave 535 / 2000  0.735
 
 3v3
 
